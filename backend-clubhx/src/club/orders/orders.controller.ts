@@ -45,8 +45,8 @@ export class OrdersController {
   @ApiOperation({ summary: 'Listar pedidos por cliente', description: 'Lista pedidos para un cliente específico' })
   async listByClient(
     @Query('client') client: string,
-    @Query('page') page?: string,
     @Res() res: Response,
+    @Query('page') page?: string,
     @Headers('authorization') authorization?: string,
   ) {
     const authHeader = authorization
@@ -65,8 +65,8 @@ export class OrdersController {
   @ApiOperation({ summary: 'Listar pedidos por vendedor', description: 'Lista pedidos para un vendedor específico' })
   async listBySeller(
     @Query('seller') seller: string,
-    @Query('page') page?: string,
     @Res() res: Response,
+    @Query('page') page?: string,
     @Headers('authorization') authorization?: string,
   ) {
     const authHeader = authorization
