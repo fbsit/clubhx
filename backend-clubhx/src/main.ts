@@ -10,7 +10,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:8080',   // front dev
       'http://127.0.0.1:3000',
-      'https://clubhx.com',      // front prod (cambia por tu dominio real)
+      'https://frontend-clubhx-production.up.railway.app',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true, // necesario si usas cookies, sesiones o auth headers
