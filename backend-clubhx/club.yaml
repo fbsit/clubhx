@@ -1,0 +1,2150 @@
+openapi: 3.0.3
+info:
+  title: Club HX API
+  version: 1.0.0
+  description: Club HX API
+paths:
+  /api/schema/:
+    get:
+      operationId: api_schema_retrieve
+      description: |-
+        OpenApi3 schema for this API. Format can be selected via content negotiation.
+
+        - YAML: application/vnd.oai.openapi
+        - JSON: application/vnd.oai.openapi+json
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - json
+          - yaml
+      - in: query
+        name: lang
+        schema:
+          type: string
+          enum:
+          - en
+          - es
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.oai.openapi:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/yaml:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/vnd.oai.openapi+json:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/order/:
+    get:
+      operationId: api_v1_order_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrderList'
+          description: ''
+  /api/v1/order-create/:
+    post:
+      operationId: api_v1_order_create_create
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/order-create-no-store/:
+    post:
+      operationId: api_v1_order_create_no_store_create
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: api_v1_order_create_no_store_update
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/order/{id}/:
+    get:
+      operationId: api_v1_order_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this pedido.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+    delete:
+      operationId: api_v1_order_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this pedido.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/orderitem/:
+    get:
+      operationId: api_v1_orderitem_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrderItemList'
+          description: ''
+    post:
+      operationId: api_v1_orderitem_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderItem'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderItem'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderItem'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderItem'
+          description: ''
+  /api/v1/orderitem/{id}/:
+    get:
+      operationId: api_v1_orderitem_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this ítem de pedido.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderItem'
+          description: ''
+    put:
+      operationId: api_v1_orderitem_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this ítem de pedido.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderItem'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderItem'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderItem'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderItem'
+          description: ''
+    patch:
+      operationId: api_v1_orderitem_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this ítem de pedido.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderItem'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderItem'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderItem'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderItem'
+          description: ''
+    delete:
+      operationId: api_v1_orderitem_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this ítem de pedido.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/ordermoduleitem/:
+    get:
+      operationId: api_v1_ordermoduleitem_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrderModuleItemList'
+          description: ''
+    post:
+      operationId: api_v1_ordermoduleitem_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderModuleItem'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderModuleItem'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderModuleItem'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderModuleItem'
+          description: ''
+  /api/v1/ordermoduleitem/{id}/:
+    get:
+      operationId: api_v1_ordermoduleitem_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this order module item.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderModuleItem'
+          description: ''
+    put:
+      operationId: api_v1_ordermoduleitem_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this order module item.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderModuleItem'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderModuleItem'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderModuleItem'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderModuleItem'
+          description: ''
+    patch:
+      operationId: api_v1_ordermoduleitem_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this order module item.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderModuleItem'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderModuleItem'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderModuleItem'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderModuleItem'
+          description: ''
+    delete:
+      operationId: api_v1_ordermoduleitem_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this order module item.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/prodmodule/:
+    get:
+      operationId: api_v1_prodmodule_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProdModuleList'
+          description: ''
+    post:
+      operationId: api_v1_prodmodule_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProdModule'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProdModule'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProdModule'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProdModule'
+          description: ''
+  /api/v1/prodmodule/{id}/:
+    get:
+      operationId: api_v1_prodmodule_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this módulo.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProdModule'
+          description: ''
+    put:
+      operationId: api_v1_prodmodule_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this módulo.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProdModule'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProdModule'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProdModule'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProdModule'
+          description: ''
+    patch:
+      operationId: api_v1_prodmodule_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this módulo.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProdModule'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProdModule'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProdModule'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProdModule'
+          description: ''
+    delete:
+      operationId: api_v1_prodmodule_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this módulo.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/prodmodulegrouped/:
+    get:
+      operationId: api_v1_prodmodulegrouped_retrieve
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/product/:
+    get:
+      operationId: api_v1_product_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductList'
+          description: ''
+    post:
+      operationId: api_v1_product_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Product'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Product'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+  /api/v1/product/{id}/:
+    get:
+      operationId: api_v1_product_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this producto.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+    put:
+      operationId: api_v1_product_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this producto.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Product'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Product'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+    patch:
+      operationId: api_v1_product_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this producto.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProduct'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProduct'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProduct'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+    delete:
+      operationId: api_v1_product_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this producto.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /helpdesk/datatables_ticket_list/{query}:
+    get:
+      operationId: helpdesk_datatables_ticket_list_retrieve
+      description: |-
+        Datatable on ticket_list.html uses this view from to get objects to display
+        on the table. query_tickets_by_args is at lib.py, DatatablesTicketSerializer is in
+        serializers.py. The serializers and this view use django-rest_framework methods
+      parameters:
+      - in: path
+        name: query
+        schema:
+          type: string
+          pattern: ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+        required: true
+      tags:
+      - helpdesk
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /helpdesk/timeline_ticket_list/{query}:
+    get:
+      operationId: helpdesk_timeline_ticket_list_retrieve
+      parameters:
+      - in: path
+        name: query
+        schema:
+          type: string
+          pattern: ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+        required: true
+      tags:
+      - helpdesk
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+components:
+  schemas:
+    BlankEnum:
+      enum:
+      - ''
+    ExternalOrderSystemEnum:
+      enum:
+      - shopify
+      - manager
+      - defontana
+      type: string
+      description: |-
+        * `shopify` - Shopify
+        * `manager` - Manager
+        * `defontana` - Defontana
+    NullEnum:
+      enum:
+      - null
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+          readOnly: true
+        module_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderModuleItem'
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Creado
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Modificado
+        is_active:
+          type: boolean
+          title: Activo
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          title: Tipo
+        date:
+          type: string
+          format: date-time
+          title: Fecha
+        accepted_date:
+          type: string
+          format: date-time
+          nullable: true
+          title: Fecha de aceptación
+        closed_date:
+          type: string
+          format: date-time
+          nullable: true
+          title: Fecha de cierre
+        invoiced_date:
+          type: string
+          format: date-time
+          nullable: true
+          title: Fecha de facturación
+        cancellation_date:
+          type: string
+          format: date-time
+          nullable: true
+          title: Fecha de anulación
+        client_attributes:
+          nullable: true
+        note:
+          type: string
+          nullable: true
+          title: Nota del cliente
+        comments:
+          type: string
+          nullable: true
+          title: Comentarios
+        extra_info:
+          type: string
+          nullable: true
+          maxLength: 255
+        name:
+          type: string
+          nullable: true
+          title: Nombre
+          maxLength: 150
+        tin:
+          type: string
+          nullable: true
+          title: RUT
+          maxLength: 20
+        address:
+          type: string
+          nullable: true
+          title: Dirección
+          maxLength: 200
+        municipality:
+          type: string
+          nullable: true
+          title: Comuna
+          maxLength: 40
+        city:
+          type: string
+          nullable: true
+          title: Ciudad
+          maxLength: 80
+        phone:
+          type: string
+          nullable: true
+          title: Teléfono
+          maxLength: 30
+        email:
+          type: string
+          format: email
+          nullable: true
+          title: E-mail
+          maxLength: 254
+        shipping_date:
+          type: string
+          format: date-time
+          nullable: true
+          title: Fecha de envío
+        shipping_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Costo de envío
+        global_discount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Descuento global
+        global_discount_percentage:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          nullable: true
+          title: Porcentaje global de descuento
+        net_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Total neto
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        shipping_status:
+          nullable: true
+          title: Estado de envío
+          oneOf:
+          - $ref: '#/components/schemas/ShippingStatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        payment_on_time:
+          type: boolean
+          nullable: true
+          title: Pago al día
+        payment_status:
+          nullable: true
+          title: Estado del pago
+          oneOf:
+          - $ref: '#/components/schemas/PaymentStatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        payment_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Monto de pago
+        payment_date:
+          type: string
+          format: date-time
+          nullable: true
+          title: Fecha de pago
+        document_number:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+          title: Número de documento
+        external_order_id:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+          title: Id de pedido externo
+        external_order_number:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+          title: Número de pedido externo
+        external_order_system:
+          nullable: true
+          title: Sistema de pedidos externo
+          oneOf:
+          - $ref: '#/components/schemas/ExternalOrderSystemEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        external_system_order_id:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+          title: Id de pedido de sistema externo
+        external_system_order_number:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+          title: Número de pedido de sistema externo
+        is_sending_email_requested:
+          type: boolean
+          title: Está solicitado envío de e-mail
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          title: Estado
+        status_changed:
+          type: string
+          format: date-time
+          title: Cambio de estado
+        purchase_order:
+          type: string
+          nullable: true
+          title: Orden de compra
+          maxLength: 70
+        client:
+          type: string
+          format: uuid
+          nullable: true
+          title: Cliente
+        seller_client:
+          type: string
+          format: uuid
+          nullable: true
+          title: Cliente prospecto
+        seller:
+          type: string
+          format: uuid
+          title: Vendedor
+        shipping_info:
+          type: string
+          format: uuid
+          nullable: true
+          title: Dirección de envío
+        billing_info:
+          type: string
+          format: uuid
+          nullable: true
+          title: Dirección de facturación
+        shipping_type:
+          type: string
+          format: uuid
+          nullable: true
+          title: Tipo de despacho
+        payment_method:
+          type: string
+          format: uuid
+          nullable: true
+          title: Forma de pago
+        payment_gateways:
+          type: array
+          items:
+            type: string
+            format: uuid
+            title: Pasarelas de pago
+          title: Pasarelas de pago
+        related_documents:
+          type: array
+          items:
+            type: string
+            format: uuid
+            title: Documentos
+          readOnly: true
+          title: Documentos
+        external_related_documents:
+          type: array
+          items:
+            type: string
+            format: uuid
+            title: Documentos externos
+          readOnly: true
+          title: Documentos externos
+      required:
+      - created
+      - date
+      - external_order_id
+      - external_order_system
+      - external_related_documents
+      - external_system_order_id
+      - id
+      - items
+      - modified
+      - module_items
+      - related_documents
+      - seller
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        product:
+          allOf:
+          - $ref: '#/components/schemas/Product'
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Creado
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Modificado
+        is_active:
+          type: boolean
+          title: Activo
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          title: Cantidad
+        discount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Descuento
+        discount_percentage:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Porcentaje de descuento
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Precio
+        latest_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Último precio
+        net_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Total neto
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        is_bonus:
+          type: boolean
+          title: Bonificación
+        comments:
+          type: string
+          nullable: true
+          title: Comentarios
+        reserved_units:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Unidades reservadas
+        order:
+          type: string
+          format: uuid
+          title: Pedido
+      required:
+      - created
+      - id
+      - modified
+      - order
+      - product
+      - quantity
+    OrderModuleItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Creado
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Modificado
+        is_active:
+          type: boolean
+          title: Activo
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          title: Cantidad
+        discount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Descuento
+        discount_percentage:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Porcentaje de descuento
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Precio
+        latest_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Último precio
+        net_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Total neto
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        is_bonus:
+          type: boolean
+          title: Bonificación
+        comments:
+          type: string
+          nullable: true
+          title: Comentarios
+        reserved_units:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Unidades reservadas
+        order:
+          type: string
+          format: uuid
+          title: Pedido
+        product:
+          type: string
+          format: uuid
+          title: Producto
+      required:
+      - created
+      - id
+      - modified
+      - order
+      - product
+      - quantity
+    PaginatedOrderItemList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+    PaginatedOrderList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+    PaginatedOrderModuleItemList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderModuleItem'
+    PaginatedProdModuleList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProdModule'
+    PaginatedProductList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+    PatchedOrderItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        product:
+          allOf:
+          - $ref: '#/components/schemas/Product'
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Creado
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Modificado
+        is_active:
+          type: boolean
+          title: Activo
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          title: Cantidad
+        discount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Descuento
+        discount_percentage:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Porcentaje de descuento
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Precio
+        latest_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Último precio
+        net_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Total neto
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        is_bonus:
+          type: boolean
+          title: Bonificación
+        comments:
+          type: string
+          nullable: true
+          title: Comentarios
+        reserved_units:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Unidades reservadas
+        order:
+          type: string
+          format: uuid
+          title: Pedido
+    PatchedOrderModuleItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Creado
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Modificado
+        is_active:
+          type: boolean
+          title: Activo
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          title: Cantidad
+        discount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Descuento
+        discount_percentage:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Porcentaje de descuento
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Precio
+        latest_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Último precio
+        net_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+          title: Total neto
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        is_bonus:
+          type: boolean
+          title: Bonificación
+        comments:
+          type: string
+          nullable: true
+          title: Comentarios
+        reserved_units:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Unidades reservadas
+        order:
+          type: string
+          format: uuid
+          title: Pedido
+        product:
+          type: string
+          format: uuid
+          title: Producto
+    PatchedProdModule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        latest_price:
+          type: string
+          readOnly: true
+        discount_percentage:
+          type: string
+          readOnly: true
+        product:
+          allOf:
+          - $ref: '#/components/schemas/Product'
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Creado
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Modificado
+        is_active:
+          type: boolean
+          title: Activo
+        name:
+          type: string
+          title: Nombre
+          maxLength: 80
+        product_code:
+          type: string
+          title: Código de producto
+          maxLength: 255
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          title: Cantidad
+        discount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          title: Descuento
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Precio
+        external_order_system:
+          nullable: true
+          title: Sistema de pedidos externo
+          oneOf:
+          - $ref: '#/components/schemas/ExternalOrderSystemEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        force_quantity:
+          type: boolean
+          title: Forzar cantidad
+        maximum_quantity_per_client:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+          title: Cantidad máxima por cliente
+        module_product:
+          type: string
+          format: uuid
+          nullable: true
+          title: Producto módulo
+    PatchedProduct:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        latest_price:
+          type: string
+          readOnly: true
+        discount_percentage:
+          type: string
+          readOnly: true
+        available_units:
+          type: string
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Creado
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Modificado
+        is_active:
+          type: boolean
+          title: Activo
+        synced:
+          type: string
+          format: date-time
+          nullable: true
+          title: Sincronizado
+        nfk:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+          title: Llave foránea externa
+        name:
+          type: string
+          title: Nombre
+          maxLength: 255
+        code:
+          type: string
+          title: Código
+          maxLength: 255
+        brand_name:
+          type: string
+          title: Marca
+          maxLength: 80
+        is_obsolete:
+          type: boolean
+          title: Obsoleto
+        deleted:
+          type: boolean
+          title: Borrado
+        sale_currency:
+          type: string
+          title: Moneda de venta
+          maxLength: 4
+        date_of_first_sale:
+          type: string
+          format: date
+          nullable: true
+          title: Fecha de la primera venta
+        weight:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+          nullable: true
+          title: Peso
+          description: unidad en kilogramos (kg)
+        target:
+          type: string
+          title: Objetivo
+          maxLength: 255
+        family_name:
+          type: string
+          title: Familia
+          maxLength: 255
+        subfamily_name:
+          type: string
+          title: Subfamilia
+          maxLength: 255
+        subsubfamily_name:
+          type: string
+          title: Subsubfamilia
+          maxLength: 255
+        valprom:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+          nullable: true
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Precio
+        volume:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Volumen
+          description: unidad es en centímetros cúbicos (cm3)
+        picking_capacity:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          title: Capacidad de picking (cajas)
+          description: Cantidad máxima de cajas permitidas para picking.
+        units_per_box:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          title: Unidades por caja
+        critical_usage:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          title: Uso crítico (%)
+          description: Un porcentaje de capacidad para picking. Cuando se tiene un
+            porcentaje menor a esa capacidad, el producto es propuesto para reposición.
+        supplier_cost_usd:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Costo proveedor (USD)
+        locale_supplier_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Costo proveedor moneda local
+        cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Costo
+        is_service:
+          type: boolean
+          title: Es un servicio
+        is_transformed:
+          type: boolean
+          title: Es un producto transformado
+          description: Un producto es transformado cuando ha cambiado con respecto
+            a los materiales que obtienes de tu proveedor. Por ejemplo, si obtienes
+            hielo y vainilla y los transformas en helado, el helado es un producto
+            transformado.
+        image:
+          type: string
+          format: uri
+          nullable: true
+          title: Imagen
+        data_sheet:
+          type: string
+          format: uri
+          nullable: true
+          title: Ficha técnica
+        is_module:
+          type: boolean
+          title: Es módulo
+    PaymentStatusEnum:
+      enum:
+      - authorized
+      - partially_paid
+      - paid
+      - partially_refunded
+      - refunded
+      - voided
+      type: string
+      description: |-
+        * `authorized` - Autorizado
+        * `partially_paid` - Pagado parcialmente
+        * `paid` - Pagado
+        * `partially_refunded` - Devuelto parcialmente
+        * `refunded` - Devuelto
+        * `voided` - Anulado
+    ProdModule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        latest_price:
+          type: string
+          readOnly: true
+        discount_percentage:
+          type: string
+          readOnly: true
+        product:
+          allOf:
+          - $ref: '#/components/schemas/Product'
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Creado
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Modificado
+        is_active:
+          type: boolean
+          title: Activo
+        name:
+          type: string
+          title: Nombre
+          maxLength: 80
+        product_code:
+          type: string
+          title: Código de producto
+          maxLength: 255
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          title: Cantidad
+        discount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          title: Descuento
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Precio
+        external_order_system:
+          nullable: true
+          title: Sistema de pedidos externo
+          oneOf:
+          - $ref: '#/components/schemas/ExternalOrderSystemEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        force_quantity:
+          type: boolean
+          title: Forzar cantidad
+        maximum_quantity_per_client:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+          title: Cantidad máxima por cliente
+        module_product:
+          type: string
+          format: uuid
+          nullable: true
+          title: Producto módulo
+      required:
+      - created
+      - discount
+      - discount_percentage
+      - external_order_system
+      - id
+      - latest_price
+      - modified
+      - name
+      - product
+      - product_code
+      - quantity
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        latest_price:
+          type: string
+          readOnly: true
+        discount_percentage:
+          type: string
+          readOnly: true
+        available_units:
+          type: string
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Creado
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Modificado
+        is_active:
+          type: boolean
+          title: Activo
+        synced:
+          type: string
+          format: date-time
+          nullable: true
+          title: Sincronizado
+        nfk:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+          title: Llave foránea externa
+        name:
+          type: string
+          title: Nombre
+          maxLength: 255
+        code:
+          type: string
+          title: Código
+          maxLength: 255
+        brand_name:
+          type: string
+          title: Marca
+          maxLength: 80
+        is_obsolete:
+          type: boolean
+          title: Obsoleto
+        deleted:
+          type: boolean
+          title: Borrado
+        sale_currency:
+          type: string
+          title: Moneda de venta
+          maxLength: 4
+        date_of_first_sale:
+          type: string
+          format: date
+          nullable: true
+          title: Fecha de la primera venta
+        weight:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+          nullable: true
+          title: Peso
+          description: unidad en kilogramos (kg)
+        target:
+          type: string
+          title: Objetivo
+          maxLength: 255
+        family_name:
+          type: string
+          title: Familia
+          maxLength: 255
+        subfamily_name:
+          type: string
+          title: Subfamilia
+          maxLength: 255
+        subsubfamily_name:
+          type: string
+          title: Subsubfamilia
+          maxLength: 255
+        valprom:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+          nullable: true
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Precio
+        volume:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Volumen
+          description: unidad es en centímetros cúbicos (cm3)
+        picking_capacity:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          title: Capacidad de picking (cajas)
+          description: Cantidad máxima de cajas permitidas para picking.
+        units_per_box:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          title: Unidades por caja
+        critical_usage:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          title: Uso crítico (%)
+          description: Un porcentaje de capacidad para picking. Cuando se tiene un
+            porcentaje menor a esa capacidad, el producto es propuesto para reposición.
+        supplier_cost_usd:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Costo proveedor (USD)
+        locale_supplier_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Costo proveedor moneda local
+        cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,5})?$
+          nullable: true
+          title: Costo
+        is_service:
+          type: boolean
+          title: Es un servicio
+        is_transformed:
+          type: boolean
+          title: Es un producto transformado
+          description: Un producto es transformado cuando ha cambiado con respecto
+            a los materiales que obtienes de tu proveedor. Por ejemplo, si obtienes
+            hielo y vainilla y los transformas en helado, el helado es un producto
+            transformado.
+        image:
+          type: string
+          format: uri
+          nullable: true
+          title: Imagen
+        data_sheet:
+          type: string
+          format: uri
+          nullable: true
+          title: Ficha técnica
+        is_module:
+          type: boolean
+          title: Es módulo
+      required:
+      - available_units
+      - code
+      - created
+      - discount_percentage
+      - id
+      - latest_price
+      - modified
+      - name
+      - sale_currency
+    ShippingStatusEnum:
+      enum:
+      - shipped
+      - partial
+      - restocked
+      type: string
+      description: |-
+        * `shipped` - Despachado
+        * `partial` - Parcial
+        * `restocked` - Reaprovisionado
+    StatusEnum:
+      enum:
+      - draft
+      - requested
+      - accepted
+      - invoiced
+      - rejected
+      - closed
+      - canceled
+      type: string
+      description: |-
+        * `draft` - Cotización
+        * `requested` - Solicitado
+        * `accepted` - Aceptado
+        * `invoiced` - Facturado
+        * `rejected` - Rechazado
+        * `closed` - Cerrado
+        * `canceled` - Anulado
+    TypeEnum:
+      enum:
+      - bill
+      - invoice
+      type: string
+      description: |-
+        * `bill` - Boleta
+        * `invoice` - Factura
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
