@@ -1,19 +1,41 @@
 // src/app.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClubModule } from './club/club.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: '2805',
-      database: 'clubhx',
-      autoLoadEntities: true,   // ✅ que Nest registre automáticamente las entidades
-      synchronize: true,        // ⚠️ solo dev
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env'] }),
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const databaseUrl = config.get<string>('DATABASE_URL');
+        const synchronize = config.get<string>('DB_SYNCHRONIZE', 'true') === 'true';
+        const ssl = config.get<string>('DB_SSL', 'false') === 'true';
+
+        if (databaseUrl) {
+          return {
+            type: 'postgres',
+            url: databaseUrl,
+            autoLoadEntities: true,
+            synchronize,
+            ssl,
+          } as const;
+        }
+
+        return {
+          type: 'postgres',
+          host: config.get<string>('DB_HOST', 'localhost'),
+          port: parseInt(config.get<string>('DB_PORT', '5432'), 10),
+          username: config.get<string>('DB_USER', 'postgres'),
+          password: config.get<string>('DB_PASSWORD', ''),
+          database: config.get<string>('DB_NAME', 'clubhx'),
+          autoLoadEntities: true,
+          synchronize,
+          ssl,
+        } as const;
+      },
     }),
     ClubModule,                 // ✅ tu módulo raíz de features
   ],
