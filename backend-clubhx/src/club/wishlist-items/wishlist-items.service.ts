@@ -29,6 +29,11 @@ export class WishlistItemsService {
   async clear(userId: string) {
     await this.repo.delete({ userId });
   }
+
+  // Admin: list all items
+  listAll() {
+    return this.repo.find();
+  }
 }
 
 

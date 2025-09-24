@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { User, UserRole } from "@/types/auth";
 import { setSessionTimeout, clearSession, setAuthToken } from "@/utils/sessionUtils";
 import { loginApi } from "@/services/authApi";
+import { clientsApi } from "@/services/clientsApi";
 import { handleError } from "@/utils/errorUtils";
 
 /**
@@ -28,10 +29,31 @@ export const useAuthMethods = (
         "client@clubhx.com",
       ].includes(email.toLowerCase());
 
+      let fetchedUserFromApi: Partial<User> | null = null;
       if (!isTester) {
         // Real API call for non-tester emails
         const { token } = await loginApi(email, password);
         setAuthToken(token);
+        // Immediately fetch current client info using token
+        try {
+          const client = await clientsApi.getCurrentClient();
+          const c: any = client as any;
+          const fullName = `${(c.first_name || '').trim()} ${(c.last_name || '').trim()}`.trim();
+          const resolvedName = fullName || c.name || c.fantasy_name || c.real_client || c.email || 'Cliente';
+          const resolvedCompany = c.company || c.fantasy_name || c.real_client || 'Mi Empresa';
+          const resolvedId = c.id ?? c.pk ?? c.nfk;
+          fetchedUserFromApi = {
+            id: resolvedId != null ? String(resolvedId) : undefined,
+            email: c.email || email,
+            name: resolvedName,
+            company: resolvedCompany,
+            role: 'client',
+            providerClientPk: resolvedId != null ? String(resolvedId) : undefined,
+            providerSellerPk: c.seller != null ? String(c.seller) : undefined,
+          } as Partial<User>;
+        } catch (e) {
+          // If fetching client fails, continue with fallback user; errors are shown elsewhere
+        }
       }
       
       // Role determination (testers: forced; others: heuristic fallback)
@@ -70,19 +92,21 @@ export const useAuthMethods = (
       
       // Mock user data with role-specific information
       const mockUser: User = {
-        id: `user-${role}-123`,
-        email,
-        name: userName,
-        company,
-        role,
+        id: fetchedUserFromApi?.id || `user-${role}-123`,
+        providerClientPk: fetchedUserFromApi?.providerClientPk || (role === 'client' ? '1' : undefined),
+        providerSellerPk: fetchedUserFromApi?.providerSellerPk ?? (role === 'sales' ? '1' : undefined),
+        email: fetchedUserFromApi?.email || email,
+        name: fetchedUserFromApi?.name || userName,
+        company: fetchedUserFromApi?.company || company,
+        role: fetchedUserFromApi?.role || role,
         status: "active",
         createdAt: new Date().toISOString(),
         address: "Av. Providencia 1234",
         city: "Santiago",
         region: "Metropolitana",
         zipCode: "7500000",
-        avatarUrl: `https://randomuser.me/api/portraits/${role === "client" ? "men" : "women"}/${Math.floor(Math.random() * 50) + 1}.jpg`,
-        creditAvailable: role === "client" ? 250000 : undefined
+        avatarUrl: `https://randomuser.me/api/portraits/${(fetchedUserFromApi?.role || role) === "client" ? "men" : "women"}/${Math.floor(Math.random() * 50) + 1}.jpg`,
+        creditAvailable: (fetchedUserFromApi?.role || role) === "client" ? 250000 : undefined
       };
       
       localStorage.setItem("clubhx-user", JSON.stringify(mockUser));
@@ -91,6 +115,14 @@ export const useAuthMethods = (
       // Set session timeout after successful login
       setupSessionTimeout();
       
+      // Admin-specific prefetch: list of clients (kept separate from client flow)
+      if (!isTester && role === 'admin') {
+        try {
+          const list = await clientsApi.getClients({ limit: 20, offset: 0 });
+          try { localStorage.setItem('admin-clients-preview', JSON.stringify({ count: list.count })); } catch {}
+        } catch {}
+      }
+
       // Role-based redirection with specific landing pages using /main prefix
       if (role === "admin") {
         navigate("/main/dashboard");

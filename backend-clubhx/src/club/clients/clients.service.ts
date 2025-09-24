@@ -37,6 +37,30 @@ export class ClientsService {
       throw new InternalServerErrorException('No se pudo contactar al servicio de clientes');
     }
   }
+
+  async fetchCurrentClient(authorization?: string) {
+    const baseUrl = process.env.SIIN_API_BASE_URL || 'https://testing.clubhx.cl';
+    const endpoint = '/api/v1/current-user';
+    if (!baseUrl) {
+      throw new InternalServerErrorException('SIIN_API_BASE_URL no está definido');
+    }
+
+    try {
+      const resp = await this.clubApi.request('get', endpoint, {
+        baseURL: baseUrl,
+        headers: {
+          Accept: 'application/json',
+          ...(authorization ? { Authorization: authorization } : {}),
+        },
+        useAuthHeader: authorization ? false : undefined,
+      });
+
+      if (resp.status === 200 && resp.data) return resp.data;
+      throw new InternalServerErrorException('Fallo al obtener el cliente actual desde SIIn');
+    } catch {
+      throw new InternalServerErrorException('No se pudo contactar al servicio de clientes');
+    }
+  }
 }
 
 

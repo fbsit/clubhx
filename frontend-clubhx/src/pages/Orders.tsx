@@ -12,7 +12,7 @@ import SalesOrdersView from "@/components/orders/sales/SalesOrdersView";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OrderStatusService } from "@/services/orderStatusService";
 import { useEffect } from "react";
-import { listOrders, listMyOrders } from "@/services/ordersApi";
+import { listOrders, listOrdersByClient, listOrdersBySeller } from "@/services/ordersApi";
 import { usePagination } from "@/hooks/usePagination";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 
@@ -46,7 +46,21 @@ export default function Orders() {
       try {
         setLoading(true);
         setError(null);
-        const resp = await listMyOrders({ limit: 100, offset: 0 });
+        const resp = await listOrdersByClient(user!.providerClientPk!, 1);
+        const results = (resp as any).results ?? resp;
+        setOrders(results as Order[]);
+      } catch (e) {
+        setOrders([]);
+        setError(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    const fetchSalesOrders = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const resp = await listOrdersBySeller(user!.providerSellerPk!, 1);
         const results = (resp as any).results ?? resp;
         setOrders(results as Order[]);
       } catch (e) {
@@ -58,7 +72,8 @@ export default function Orders() {
     };
     if (user?.role === "admin") fetchAdminOrders();
     if (user?.role === "client") fetchClientOrders();
-  }, [user?.role]);
+    if (user?.role === "sales") fetchSalesOrders();
+  }, [user?.role, user?.id]);
   const isMobile = useIsMobile();
 
   // Filter orders first, then apply pagination

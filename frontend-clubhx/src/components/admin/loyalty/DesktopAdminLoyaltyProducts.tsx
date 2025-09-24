@@ -317,6 +317,7 @@ export default function DesktopAdminLoyaltyProducts({
               onToggleFeatured={() => handleToggleFeatured(product.id)}
               onChangeStatus={(status) => handleChangeStatus(product.id, status)}
               onUpdateStock={(stock) => handleUpdateStock(product.id, stock)}
+              isAdmin={true}
             />
           ))}
         </div>

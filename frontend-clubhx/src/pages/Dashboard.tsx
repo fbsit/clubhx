@@ -5,6 +5,8 @@ import ClientDashboard from "@/components/dashboard/ClientDashboard";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import SalesDashboard from "@/components/dashboard/SalesDashboard";
 import { Order, Event } from "@/components/dashboard/dashboardTypes";
+import { listOrdersByClient } from "@/services/ordersApi";
+import { eventsApi } from "@/services/eventsApi";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -12,60 +14,75 @@ export default function Dashboard() {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [eventsError, setEventsError] = useState<string | null>(null);
+  const [ordersTotal, setOrdersTotal] = useState<number>(0);
 
   useEffect(() => {
-    // Simulate API call
     const fetchDashboardData = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock data
-      setRecentOrders([
-        {
-          id: "ORD-2025-0473",
-          date: "2024-05-02",
-          total: 450000,
-          status: "completed",
-          items: 12
-        },
-        {
-          id: "ORD-2025-0465",
-          date: "2024-04-28",
-          total: 125000,
-          status: "shipped",
-          items: 3
-        },
-        {
-          id: "ORD-2025-0452",
-          date: "2024-04-20",
-          total: 780000,
-          status: "invoiced",
-          items: 8
-        }
-      ]);
-      
-      setUpcomingEvents([
-        {
-          id: "EVT-001",
-          title: "Técnicas de coloración avanzada",
-          date: "2024-05-15",
-          type: "Workshop",
-          brand: ""
-        },
-        {
-          id: "EVT-002",
-          title: "Lanzamiento colección Verano 2025",
-          date: "2024-05-20",
-          type: "Product Launch",
-          brand: "Schwarzkopf"
-        }
-      ]);
-      
-      setLoyaltyPoints(1250);
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+        setOrdersError(null);
+        setEventsError(null);
+        const ordersPromise = (async () => {
+          console.log("user", user);
+          // Solo aplica a clientes; otros roles no muestran este bloque
+          if (user?.role !== "client") return [] as Order[];
+          try {
+            //if (!user?.providerClientPk) return [] as Order[];
+            const resp = await listOrdersByClient(user.providerClientPk || "1", 1);
+            const raw = (resp as any).results ?? resp;
+            const totalCount = Number((resp as any)?.count ?? (Array.isArray(raw) ? raw.length : 0));
+            const finalTotal = Number.isFinite(totalCount) ? totalCount : 0;
+            setOrdersTotal(finalTotal);
+            try { localStorage.setItem('client-orders-total', String(finalTotal)); } catch {}
+            const mapped: Order[] = (Array.isArray(raw) ? raw : [])
+              .map((o: any) => ({
+                id: String(o.id ?? o.order_id ?? o.pk ?? ""),
+                date: String(o.date ?? o.created ?? o.created_at ?? o.updated_at ?? new Date().toISOString()),
+                total: Number(o.total ?? o.total_amount ?? o.amount ?? 0),
+                status: (o.status ?? "requested") as Order["status"],
+                items: Number(o.items_count ?? (Array.isArray(o.items) ? o.items.length : 0)),
+              }))
+              .filter(o => o.id)
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .slice(0, 5);
+            return mapped;
+          } catch {
+            setOrdersError("No hay datos para mostrar o ocurrió un error cargando tus órdenes.");
+            setOrdersTotal(0);
+            try { localStorage.setItem('client-orders-total', '0'); } catch {}
+            return [] as Order[];
+          }
+        })();
+
+        const eventsPromise = (async () => {
+          try {
+            const dtos = await eventsApi.getUpcomingPublicEvents(5);
+            const mapped: Event[] = dtos.map(d => ({
+              id: String(d.id),
+              title: d.title,
+              date: (d.start_date instanceof Date ? d.start_date : new Date(d.start_date as any)).toISOString().slice(0, 10),
+              type: d.category || d.status || "Evento",
+              brand: d.tags?.[0] || "",
+            }));
+            return mapped;
+          } catch {
+            setEventsError("No hay eventos próximos para mostrar o ocurrió un error.");
+            return [] as Event[];
+          }
+        })();
+
+        const [orders, events] = await Promise.all([ordersPromise, eventsPromise]);
+        setRecentOrders(orders);
+        setUpcomingEvents(events);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    
+
     fetchDashboardData();
-  }, [user?.role]);
+  }, [user?.role, user?.providerClientPk]);
 
   if (isLoading) {
     return (
@@ -103,6 +120,8 @@ export default function Dashboard() {
         recentOrders={recentOrders}
         upcomingEvents={upcomingEvents}
         loyaltyPoints={loyaltyPoints}
+        ordersError={ordersError}
+        eventsError={eventsError}
         creditAvailable={0}
       />
     </div>

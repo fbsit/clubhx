@@ -105,7 +105,7 @@ export default function OrderCard({ order, onSelectOrder, onPaymentProofUploaded
             <p className="text-sm text-muted-foreground">
               {order.date} • 
               {order.items.length} {order.items.length === 1 ? 'producto' : 'productos'} • 
-              ${order.total.toLocaleString('es-CL')}
+              ${(order.total ?? 0).toLocaleString('es-CL')}
             </p>
           </div>
           
@@ -171,7 +171,7 @@ export default function OrderCard({ order, onSelectOrder, onPaymentProofUploaded
 
             {/* Datos Bancarios - cuando está entregado pero no pagado */}
             {order.status === "delivered" && !order.paymentProof && (
-              <BankingInfoDialog orderTotal={order.total} orderId={order.id}>
+              <BankingInfoDialog orderTotal={order.total ?? 0} orderId={order.id}>
                 <Button 
                   variant="outline" 
                   size={isMobile ? "sm" : "default"}

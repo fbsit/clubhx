@@ -17,8 +17,8 @@ import { Order, Event, StatusCardProps } from "@/components/dashboard/dashboardT
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect, useState } from "react";
 import { getDashboardMetrics } from "@/services/dashboardApi";
-import { TIER_CONFIG } from "@/types/loyalty";
-import { fetchMyLoyaltyPoints } from "@/services/loyaltyApi";
+import { TIER_CONFIG, CustomerTier } from "@/types/loyalty";
+import { fetchMyLoyaltyPoints, fetchMyPointsExpiring, PointsExpiringItem } from "@/services/loyaltyApi";
 
 // Component for status cards with consistent styling
 const StatusCard = ({ icon, title, value, subtitle, gradient, delay = 0 }: StatusCardProps) => (
@@ -42,12 +42,13 @@ const StatusCard = ({ icon, title, value, subtitle, gradient, delay = 0 }: Statu
 // Loyalty tier display component with progress to next tier
 const LoyaltyTierDisplay = () => {
   // Until real tier history exists, show Standard tier and zero progress using real points for display only
-  const currentTier: keyof typeof TIER_CONFIG = 'standard';
+  const currentTier: CustomerTier = 'standard';
   const tierConfig = TIER_CONFIG[currentTier];
   
   const getNextTier = () => {
-    if (currentTier === 'standard') return { tier: 'premium', minPoints: TIER_CONFIG.premium.minPoints };
-    if (currentTier === 'premium') return { tier: 'elite', minPoints: TIER_CONFIG.elite.minPoints };
+    if (currentTier === 'standard') return { tier: 'premium' as const, minPoints: TIER_CONFIG.premium.minPoints };
+    if (currentTier === 'premium') return { tier: 'elite' as const, minPoints: TIER_CONFIG.elite.minPoints };
+    return null;
     return null;
   };
 
@@ -55,29 +56,11 @@ const LoyaltyTierDisplay = () => {
   const points12Months = 0;
   const progressPercentage = nextTier ? 0 : 100;
 
-  const getGradientConfig = () => {
-    switch (currentTier) {
-      case 'elite':
-        return {
-          gradient: 'bg-gradient-to-br from-purple-100 via-violet-200 to-purple-200',
-          iconColor: 'text-purple-600',
-          description: 'Beneficios máximos y validez extendida'
-        };
-      case 'premium':
-        return {
-          gradient: 'bg-gradient-to-br from-amber-100 via-yellow-200 to-amber-200',
-          iconColor: 'text-amber-600',
-          description: 'Puntos válidos por 24 meses'
-        };
-      case 'standard':
-      default:
-        return {
-          gradient: 'bg-gradient-to-br from-green-100 via-emerald-200 to-green-200',
-          iconColor: 'text-green-600',
-          description: 'Puntos válidos por 12 meses'
-        };
-    }
-  };
+  const getGradientConfig = () => ({
+    gradient: 'bg-gradient-to-br from-green-100 via-emerald-200 to-green-200',
+    iconColor: 'text-green-600',
+    description: 'Puntos válidos por 12 meses'
+  });
 
   const config = getGradientConfig();
 
@@ -114,8 +97,7 @@ const LoyaltyTierDisplay = () => {
 // Enhanced points display with expiration alerts
 const EnhancedPointsDisplay = () => {
   const [availablePoints, setAvailablePoints] = useState<number>(0);
-  const pendingPoints = 0;
-  const expiringPoints = 0;
+  const [expiring, setExpiring] = useState<PointsExpiringItem[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,9 +108,21 @@ const EnhancedPointsDisplay = () => {
       } catch {
         if (!cancelled) setAvailablePoints(0);
       }
+      try {
+        const { expirations } = await fetchMyPointsExpiring(6);
+        if (!cancelled) {
+          setExpiring(expirations || []);
+          try { localStorage.setItem('loyalty-expiring-next', JSON.stringify(expirations?.[0] || { month: '', expires: 0 })); } catch {}
+        }
+      } catch {
+        if (!cancelled) setExpiring([]);
+      }
     })();
     return () => { cancelled = true; };
   }, []);
+
+  const pendingPoints = 0;
+  const expiringPoints = expiring?.[0]?.expires ?? 0;
 
   return (
     <Card className="animate-enter [animation-delay:150ms] border-0 relative group transition-all hover:shadow-md cursor-pointer">
@@ -172,30 +166,12 @@ const TierBenefitsCard = () => {
   const tierConfig = TIER_CONFIG[currentTier];
   
   const getBenefits = () => {
-    switch (currentTier) {
-      case 'elite':
-        return [
-          'Puntos válidos por 36 meses',
-          'Acceso exclusivo a eventos VIP',
-          'Descuentos especiales',
-          'Soporte prioritario'
-        ];
-      case 'premium':
-        return [
-          'Puntos válidos por 24 meses',
-          'Acceso a eventos especiales',
-          'Ofertas exclusivas',
-          'Canjes premium'
-        ];
-      case 'standard':
-      default:
-        return [
-          'Puntos válidos por 12 meses',
-          'Canjes básicos disponibles',
-          'Notificaciones de ofertas',
-          'Programa de lealtad'
-        ];
-    }
+    return [
+      'Puntos válidos por 12 meses',
+      'Canjes básicos disponibles',
+      'Notificaciones de ofertas',
+      'Programa de lealtad'
+    ];
   };
 
   return (
@@ -232,16 +208,52 @@ interface ClientDashboardProps {
   upcomingEvents: Event[];
   loyaltyPoints: number;
   creditAvailable: number;
+  ordersError?: string | null;
+  eventsError?: string | null;
+  ordersTotal?: number;
+  [key: string]: any;
 }
 
-export const ClientDashboard = ({ 
+export default function ClientDashboard({ 
   user, 
   recentOrders, 
   upcomingEvents, 
-  loyaltyPoints
-}: ClientDashboardProps) => {
+  loyaltyPoints,
+  ordersError,
+  eventsError,
+  ordersTotal
+}: ClientDashboardProps) {
   const isMobile = useIsMobile();
-  const [clientOrdersTotal, setClientOrdersTotal] = useState<number | null>(null);
+  const [clientOrdersTotal, setClientOrdersTotal] = useState<number | null>(() => {
+    try {
+      const saved = localStorage.getItem('client-orders-total');
+      return saved ? Number(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [expiringNext, setExpiringNext] = useState<{ month: string; expires: number }>({ month: '', expires: 0 });
+  const [expiringArr, setExpiringArr] = useState<PointsExpiringItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('loyalty-expiring-next');
+      if (saved) setExpiringNext(JSON.parse(saved));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { expirations } = await fetchMyPointsExpiring(6);
+        if (!cancelled) setExpiringArr(expirations || []);
+      } catch {
+        if (!cancelled) setExpiringArr([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
   const [metricsError, setMetricsError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -279,7 +291,7 @@ export const ClientDashboard = ({
         <StatusCard 
           icon={<ShoppingCart className="h-4 w-4 text-muted-foreground" />}
           title="Total de Pedidos"
-          value={clientOrdersTotal !== null ? String(clientOrdersTotal) : String(recentOrders.length || 0)}
+          value={String(ordersTotal ?? 0)}
           subtitle="+5 pedidos en el último mes"
         />
         
@@ -335,10 +347,17 @@ export const ClientDashboard = ({
             </CardHeader>
             <CardContent className="relative z-10">
               <div className="text-2xl font-bold group-hover:scale-105 transition-transform origin-left">
-                1,167 puntos
+                {(expiringArr[0]?.expires ?? expiringNext.expires ?? 0).toLocaleString('es-CL')} puntos
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Expiran en Noviembre 2025
+                {(() => {
+                  if (expiringArr.length === 0 && !expiringNext.month) return 'Sin expiraciones próximas';
+                  const ym = (expiringArr[0]?.month || expiringNext.month || ''); // 'YYYY-MM'
+                  const [y, m] = ym.split('-').map(Number);
+                  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+                  const expNext = expiringArr[0]?.expires ?? expiringNext.expires ?? 0;
+                  return expNext > 0 ? `Expiran en ${meses[(m || 1) - 1]} ${y}` : 'Sin expiraciones este mes';
+                })()}
               </p>
               <div className="text-xs text-orange-600 mt-2">
                 Haz clic para ver detalles
@@ -359,6 +378,12 @@ export const ClientDashboard = ({
           </CardHeader>
           <CardContent className="relative z-10">
             <div className="space-y-4">
+              {ordersError && recentOrders.length === 0 && (
+                <p className="text-sm text-muted-foreground">{ordersError}</p>
+              )}
+              {!ordersError && recentOrders.length === 0 && (
+                <p className="text-sm text-muted-foreground">No hay órdenes recientes para mostrar.</p>
+              )}
               {recentOrders.map((order) => (
                 <div
                   key={order.id}
@@ -412,6 +437,12 @@ export const ClientDashboard = ({
           </CardHeader>
           <CardContent className="relative z-10">
             <div className="space-y-4">
+              {eventsError && upcomingEvents.length === 0 && (
+                <p className="text-sm text-muted-foreground">{eventsError}</p>
+              )}
+              {!eventsError && upcomingEvents.length === 0 && (
+                <p className="text-sm text-muted-foreground">No hay eventos próximos para mostrar.</p>
+              )}
               {upcomingEvents.map((event) => (
                 <div 
                   key={event.id} 
@@ -464,6 +495,4 @@ export const ClientDashboard = ({
       </div>
     </div>
   );
-};
-
-export default ClientDashboard;
+}

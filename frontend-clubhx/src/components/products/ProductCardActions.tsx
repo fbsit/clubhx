@@ -8,6 +8,7 @@ import { useQuotation } from "@/contexts/QuotationContext";
 import { useSalesQuotation } from "@/contexts/SalesQuotationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import WishlistButton from "@/components/wishlist/WishlistButton";
 import { toast } from "sonner";
 import NotifyWhenAvailableDialog from "./stock/NotifyWhenAvailableDialog";
 import ReserveProductDialog from "./stock/ReserveProductDialog";
@@ -65,14 +66,22 @@ const ProductCardActions = ({ product, viewMode, onAddToQuote }: ProductCardActi
             </Button>
           </div>
         ) : (
-          <Button 
-            onClick={onAddToQuote}
-            variant="secondary"
-            size="sm"
-            className="h-7 min-w-7 px-2"
-          >
-            <ShoppingBag className="h-3.5 w-3.5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button 
+              onClick={onAddToQuote}
+              variant="secondary"
+              size="sm"
+              className="h-7 min-w-7 px-2"
+            >
+              <ShoppingBag className="h-3.5 w-3.5" />
+            </Button>
+            <WishlistButton 
+              product={product}
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+            />
+          </div>
         )}
       </div>
     );
@@ -125,15 +134,22 @@ const ProductCardActions = ({ product, viewMode, onAddToQuote }: ProductCardActi
             </div>
           </div>
         ) : (
-          <Button 
-            onClick={onAddToQuote}
-            variant="default"
-            className="w-full text-sm h-10 font-medium"
-            size="sm"
-          >
-            <ShoppingBag className="h-4 w-4 mr-2" />
-            Agregar
-          </Button>
+          <div className="w-full flex items-center gap-2">
+            <Button 
+              onClick={onAddToQuote}
+              variant="default"
+              className="flex-1 text-sm h-10 font-medium"
+              size="sm"
+            >
+              <ShoppingBag className="h-4 w-4 mr-2" />
+              Agregar
+            </Button>
+            <WishlistButton 
+              product={product}
+              variant="outline"
+              className="h-10 w-10 p-0"
+            />
+          </div>
         )}
       </div>
       

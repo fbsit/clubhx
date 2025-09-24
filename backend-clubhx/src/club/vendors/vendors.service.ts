@@ -13,11 +13,14 @@ export class VendorsService {
     private readonly clubApi: ClubApiService,
   ) {}
 
-  async list(): Promise<VendorEntity[]> {
-    // Fetch from provider: /api/v1/person/
+  async list(authorization?: string): Promise<VendorEntity[]> {
+    // Fetch from provider: /api/v1/person/ (requires auth header for scoping in provider)
     try {
-      const resp = await this.clubApi.request('get', '/api/v1/person/', {});
-      if (resp.status === 200) return resp.data as unknown as VendorEntity[];
+      const headers = authorization
+        ? { Authorization: authorization.startsWith('Bearer ') ? `Token ${authorization.slice(7)}` : authorization }
+        : undefined;
+      const resp = await this.clubApi.request('get', '/api/v1/person/', { headers, useAuthHeader: headers ? false : undefined });
+      if (resp.status === 200 && Array.isArray(resp.data)) return resp.data as unknown as VendorEntity[];
     } catch {}
     // Fallback to local DB
     return this.repo.find();

@@ -202,10 +202,11 @@ export const LoyaltyProductForm: React.FC<LoyaltyProductFormProps> = ({
 								<Input 
 									id="available" 
 									type="number"
-									value={product.available !== null ? product.available : ""}
+									value={product.stockQuantity !== undefined ? product.stockQuantity : (product.available ?? "")}
 									placeholder="Dejar vacío para ilimitado"
 									onChange={(e) => onChangeProduct({
 										...product, 
+										stockQuantity: e.target.value === "" ? 0 : parseInt(e.target.value),
 										available: e.target.value === "" ? null : parseInt(e.target.value)
 									})}
 								/>

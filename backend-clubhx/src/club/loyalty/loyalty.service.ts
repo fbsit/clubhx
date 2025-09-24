@@ -84,11 +84,75 @@ export class LoyaltyModuleService {
     }
   
     async getPoints(customerId: string): Promise<number> {
-      const points = await this.listLoyaltyPoints({
-        customer_id: customerId,
-      });
-  
-      return points[0]?.points || 0;
+      const points = await this.listLoyaltyPoints({ customer_id: customerId });
+      const base = points[0]?.points || 0;
+      const expiryMonths = Number(process.env.LOYALTY_EXPIRY_MONTHS || 0);
+      if (!expiryMonths || expiryMonths <= 0) return base;
+
+      const txRepo = this.dataSource.getRepository(LoyaltyTransaction);
+      const txs = await txRepo.find({ where: { customer_id: customerId }, order: { created_at: 'ASC' } });
+      type Lot = { points: number; earnedAt: Date };
+      const lots: Lot[] = [];
+      const now = new Date();
+      const addMonths = (d: Date, m: number) => new Date(d.getFullYear(), d.getMonth() + m, d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds(), d.getMilliseconds());
+      for (const tx of txs) {
+        if (tx.points_delta > 0) {
+          lots.push({ points: tx.points_delta, earnedAt: tx.created_at });
+        } else if (tx.points_delta < 0) {
+          let toSpend = -tx.points_delta;
+          while (toSpend > 0 && lots.length > 0) {
+            const lot = lots[0];
+            const spend = Math.min(lot.points, toSpend);
+            lot.points -= spend;
+            toSpend -= spend;
+            if (lot.points <= 0) lots.shift();
+          }
+        }
+        // prune expired lots
+        for (let i = lots.length - 1; i >= 0; i--) {
+          const expiresAt = addMonths(lots[i].earnedAt, expiryMonths);
+          if (expiresAt <= now) lots.splice(i, 1);
+        }
+      }
+      return lots.reduce((sum, l) => sum + l.points, 0);
+    }
+
+    async getUpcomingExpirations(customerId: string, monthsAhead = 6): Promise<{ month: string; expires: number }[]> {
+      const expiryMonths = Number(process.env.LOYALTY_EXPIRY_MONTHS || 0);
+      if (!expiryMonths || expiryMonths <= 0) return [];
+      const txRepo = this.dataSource.getRepository(LoyaltyTransaction);
+      const txs = await txRepo.find({ where: { customer_id: customerId }, order: { created_at: 'ASC' } });
+      type Lot = { points: number; earnedAt: Date };
+      const lots: Lot[] = [];
+      for (const tx of txs) {
+        if (tx.points_delta > 0) lots.push({ points: tx.points_delta, earnedAt: tx.created_at });
+        if (tx.points_delta < 0) {
+          let toSpend = -tx.points_delta;
+          while (toSpend > 0 && lots.length > 0) {
+            const lot = lots[0];
+            const spend = Math.min(lot.points, toSpend);
+            lot.points -= spend;
+            toSpend -= spend;
+            if (lot.points <= 0) lots.shift();
+          }
+        }
+      }
+      const now = new Date();
+      const buckets = new Map<string, number>();
+      for (const lot of lots) {
+        const expiresAt = new Date(lot.earnedAt);
+        expiresAt.setMonth(expiresAt.getMonth() + expiryMonths);
+        if (expiresAt <= now) continue;
+        const key = `${expiresAt.getFullYear()}-${String(expiresAt.getMonth() + 1).padStart(2, '0')}`;
+        buckets.set(key, (buckets.get(key) || 0) + lot.points);
+      }
+      const results: { month: string; expires: number }[] = [];
+      for (let i = 0; i < monthsAhead; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        results.push({ month: key, expires: buckets.get(key) || 0 });
+      }
+      return results;
     }
   
     async calculatePointsFromAmount(amount: number): Promise<number> {

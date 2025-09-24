@@ -25,20 +25,7 @@ export class OrdersController {
     return res.status(upstream.status).send(upstream.data);
   }
 
-  // Client-only orders (same upstream, relies on Authorization to scope results)
-  @Get('/my')
-  @ApiOperation({ summary: 'Listar mis pedidos', description: 'Lista los pedidos del usuario autenticado (según Authorization)' })
-  async listMine(@Query() query: PaginationQueryDto, @Res() res: Response, @Headers('authorization') authorization?: string) {
-    const authHeader = authorization
-      ? (authorization.startsWith('Bearer ') ? `Token ${authorization.slice(7)}` : authorization)
-      : undefined;
-    const upstream = await this.api.request('get', '/api/v1/order/', {
-      query,
-      headers: authHeader ? { Authorization: authHeader } : undefined,
-      useAuthHeader: authHeader ? false : undefined,
-    });
-    return res.status(upstream.status).send(upstream.data);
-  }
+  // Removed /my: use /by-client or /by-seller instead
 
   // New: list orders by client (provider: /api/v1/clientorders/?client=pk&page=int)
   @Get('/by-client')

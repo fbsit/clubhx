@@ -6,13 +6,13 @@ export class VisitEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
+  @Column({ type: 'varchar', length: 64 })
   salesPersonId: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   salesPersonName: string | null;
 
-  @Column('uuid')
+  @Column({ type: 'varchar', length: 64 })
   customerId: string;
 
   @Column({ type: 'varchar', length: 255 })

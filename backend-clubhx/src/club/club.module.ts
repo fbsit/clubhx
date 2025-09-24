@@ -23,6 +23,7 @@ import { WishlistItemsModule } from './wishlist-items/wishlist-items.module';
 import { SalesAnalyticsModule } from './sales-analytics/sales-analytics.module';
 import { SalesCustomersModule } from './sales-customers/sales-customers.module';
 import { SalesEventsModule } from './sales-events/sales-events.module';
+import { AddressesModule } from './addresses/addresses.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { SalesEventsModule } from './sales-events/sales-events.module';
           SalesAnalyticsModule,
           SalesCustomersModule,
           SalesEventsModule,
+          AddressesModule,
   ],
 })
 export class ClubModule {}

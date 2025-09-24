@@ -249,18 +249,27 @@ export function ProductCard({
           </div>
         </div>
         
-        {/* Button */}
-        <div className="w-full">
+        {/* Buttons */}
+        <div className="w-full grid grid-cols-1 gap-2">
           {isAdmin ? (
-            <Button 
-              size={isMobile ? "sm" : "default"}
-              onClick={handleRedeem}
-              className="w-full rounded-full font-medium"
-              variant="outline"
-            >
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Ver Estadísticas
-            </Button>
+            <>
+              <Button 
+                size={isMobile ? "sm" : "default"}
+                onClick={handleEdit}
+                className="w-full rounded-full font-medium"
+                variant="default"
+              >
+                <Edit className="mr-2 h-4 w-4" /> Modificar
+              </Button>
+              <Button 
+                size={isMobile ? "sm" : "default"}
+                onClick={handleRedeem}
+                className="w-full rounded-full font-medium"
+                variant="outline"
+              >
+                <BarChart3 className="mr-2 h-4 w-4" /> Ver Estadísticas
+              </Button>
+            </>
           ) : (
             <Button 
               disabled={userPoints < product.pointsCost}

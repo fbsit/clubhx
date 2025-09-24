@@ -53,6 +53,9 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
+  // Optional upstream/provider primary keys used for scoped queries
+  providerClientPk?: string;
+  providerSellerPk?: string;
   avatar?: string;
   avatarUrl?: string; 
   status: 'active' | 'inactive' | 'pending' | 'pending_approval';

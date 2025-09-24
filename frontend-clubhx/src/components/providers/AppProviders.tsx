@@ -18,15 +18,13 @@ const QuotationProviderWrapper = ({ children }: { children: ReactNode }) => {
   }
   
   return (
-    <NotificationProvider>
-      <QuotationProvider>
-        <WishlistProvider>
-          <SalesQuotationProvider>
-            {children}
-          </SalesQuotationProvider>
-        </WishlistProvider>
-      </QuotationProvider>
-    </NotificationProvider>
+    <QuotationProvider>
+      <WishlistProvider>
+        <SalesQuotationProvider>
+          {children}
+        </SalesQuotationProvider>
+      </WishlistProvider>
+    </QuotationProvider>
   );
 };
 
@@ -35,9 +33,11 @@ export const AppProviders = ({ children }: { children: ReactNode }) => {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <QuotationProviderWrapper>
-          {children}
-        </QuotationProviderWrapper>
+        <NotificationProvider>
+          <QuotationProviderWrapper>
+            {children}
+          </QuotationProviderWrapper>
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );

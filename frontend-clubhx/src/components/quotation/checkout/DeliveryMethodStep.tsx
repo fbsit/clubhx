@@ -1,34 +1,107 @@
 
-import { FC, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronRight, Truck, MapPin } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { AddressPayload, createAddress, listAddresses } from "@/services/addressesApi";
 
 type DeliveryMethodStepProps = {
   onNext: () => void;
   onPrev: () => void;
+  onAddressSelected: (address: AddressPayload) => void;
 };
 
 const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({ 
   onNext, 
-  onPrev 
+  onPrev,
+  onAddressSelected,
 }) => {
-  const [useCustomAddress, setUseCustomAddress] = useState(false);
+  const { user } = useAuth();
+  const [useCustomAddress, setUseCustomAddress] = useState(true);
   const [customAddress, setCustomAddress] = useState({
+    name: "Entrega",
+    phone: "",
     street: "",
+    number: "",
+    apartment: "",
     city: "",
+    commune: "",
     region: "",
     notes: ""
   });
+  const [addresses, setAddresses] = useState<AddressPayload[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const hasAddresses = addresses.length > 0;
+
+  useEffect(() => {
+    const load = async () => {
+      if (!user?.providerClientPk && !user?.id) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const cid = String(user.providerClientPk || user.id);
+        const list = await listAddresses(cid);
+        setAddresses(list || []);
+        const def = (list || []).find((a: AddressPayload) => a.isDefault) || (list || [])[0] || null;
+        setSelectedId(def?.id || null);
+        setUseCustomAddress(!(list && list.length > 0));
+      } catch (e) {
+        setError("No se pudieron cargar las direcciones");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
+  }, [user?.providerClientPk, user?.id]);
+
+  const selectedAddress = useMemo(() => addresses.find(a => a.id === selectedId) || null, [addresses, selectedId]);
 
   const handleAddressChange = (field: string, value: string) => {
     setCustomAddress(prev => ({
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleContinue = async () => {
+    if (!user) return;
+    const customerId = String(user.providerClientPk || user.id);
+    if (useCustomAddress) {
+      if (!customAddress.street || !customAddress.city || !customAddress.region) return;
+      setIsLoading(true);
+      try {
+        const created = await createAddress({
+          customerId,
+          name: customAddress.name || "Entrega",
+          phone: customAddress.phone,
+          street: customAddress.street,
+          number: customAddress.number,
+          apartment: customAddress.apartment,
+          city: customAddress.city,
+          commune: customAddress.commune,
+          region: customAddress.region,
+          isDefault: false,
+        });
+        // Marcar como seleccionada para continuar
+        setSelectedId(created.id!);
+        setAddresses(prev => [created, ...prev]);
+        onAddressSelected(created);
+        onNext();
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      if (selectedAddress) {
+        onAddressSelected(selectedAddress);
+        onNext();
+      }
+    }
   };
 
   return (
@@ -54,28 +127,50 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
             </p>
             
             <div className="mt-4 ml-7 space-y-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="custom-address"
-                  checked={useCustomAddress}
-                  onChange={(e) => setUseCustomAddress(e.target.checked)}
-                  className="rounded border-gray-300"
-                />
-                <Label htmlFor="custom-address" className="text-sm cursor-pointer">
-                  Usar una dirección diferente
-                </Label>
-              </div>
+              {hasAddresses && (
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="custom-address"
+                    checked={useCustomAddress}
+                    onChange={(e) => setUseCustomAddress(e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="custom-address" className="text-sm cursor-pointer">
+                    Usar una dirección diferente
+                  </Label>
+                </div>
+              )}
 
               {!useCustomAddress ? (
-                <div className="text-sm bg-muted/40 p-3 rounded">
+                <div className="text-sm bg-muted/40 p-3 rounded space-y-2">
                   <p className="flex items-center font-medium mb-1">
                     <MapPin className="h-4 w-4 mr-1" />
                     Dirección registrada:
                   </p>
-                  <p>Av. Providencia 1234, Oficina 456</p>
-                  <p>Providencia, Santiago</p>
-                  <p>Región Metropolitana</p>
+                  {error && <p className="text-amber-700">{error}</p>}
+                  {!error && isLoading && <p>Cargando direcciones…</p>}
+                  {!error && !isLoading && addresses.length > 0 && (
+                    <div className="space-y-2">
+                      {addresses.map(addr => (
+                        <label key={addr.id} className="flex items-start gap-2 p-2 rounded border cursor-pointer">
+                          <input
+                            type="radio"
+                            name="addr"
+                            checked={selectedId === addr.id}
+                            onChange={() => setSelectedId(addr.id!)}
+                            className="mt-1"
+                          />
+                          <div>
+                            <p className="font-medium">{addr.name || 'Dirección'}</p>
+                            <p>{addr.street}{addr.number ? `, ${addr.number}` : ''}{addr.apartment ? `, ${addr.apartment}` : ''}</p>
+                            <p>{addr.commune}{addr.city ? `, ${addr.city}` : ''}</p>
+                            <p>{addr.region}</p>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3 bg-muted/20 p-4 rounded-lg">
@@ -84,6 +179,32 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
                     Nueva dirección de entrega:
                   </p>
                   <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="name" className="text-xs text-muted-foreground">
+                          Nombre para esta dirección
+                        </Label>
+                        <Input
+                          id="name"
+                          placeholder="Casa, Oficina, etc."
+                          value={customAddress.name}
+                          onChange={(e) => handleAddressChange("name", e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="phone" className="text-xs text-muted-foreground">
+                          Teléfono de contacto
+                        </Label>
+                        <Input
+                          id="phone"
+                          placeholder="+56 9 1234 5678"
+                          value={customAddress.phone}
+                          onChange={(e) => handleAddressChange("phone", e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
                     <div>
                       <Label htmlFor="street" className="text-xs text-muted-foreground">
                         Dirección *
@@ -98,14 +219,40 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label htmlFor="city" className="text-xs text-muted-foreground">
+                        <Label htmlFor="number" className="text-xs text-muted-foreground">
+                          Número
+                        </Label>
+                        <Input
+                          id="number"
+                          placeholder="1234"
+                          value={customAddress.number}
+                          onChange={(e) => handleAddressChange("number", e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="apartment" className="text-xs text-muted-foreground">
+                          Depto./Oficina
+                        </Label>
+                        <Input
+                          id="apartment"
+                          placeholder="Oficina 456"
+                          value={customAddress.apartment}
+                          onChange={(e) => handleAddressChange("apartment", e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="commune" className="text-xs text-muted-foreground">
                           Comuna *
                         </Label>
                         <Input
-                          id="city"
+                          id="commune"
                           placeholder="Las Condes"
-                          value={customAddress.city}
-                          onChange={(e) => handleAddressChange("city", e.target.value)}
+                          value={customAddress.commune}
+                          onChange={(e) => handleAddressChange("commune", e.target.value)}
                           className="mt-1"
                         />
                       </div>
@@ -121,6 +268,18 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
                           className="mt-1"
                         />
                       </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="city" className="text-xs text-muted-foreground">
+                        Ciudad
+                      </Label>
+                      <Input
+                        id="city"
+                        placeholder="Santiago"
+                        value={customAddress.city}
+                        onChange={(e) => handleAddressChange("city", e.target.value)}
+                        className="mt-1"
+                      />
                     </div>
                     <div>
                       <Label htmlFor="notes" className="text-xs text-muted-foreground">
@@ -150,7 +309,7 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
           Atrás
         </Button>
         <Button 
-          onClick={onNext} 
+          onClick={handleContinue} 
           className="flex items-center"
           disabled={useCustomAddress && (!customAddress.street || !customAddress.city || !customAddress.region)}
         >

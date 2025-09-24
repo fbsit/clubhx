@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuotation } from "@/contexts/QuotationContext";
 import { listOrders } from "@/services/ordersApi";
 import { fetchProducts } from "@/services/productsApi";
@@ -28,7 +28,7 @@ export default function HistoryPurchaseFlow() {
   const [allProducts, setAllProducts] = useState<any[]>([]);
   
   // Load orders and products
-  React.useEffect(() => {
+  useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
@@ -54,7 +54,7 @@ export default function HistoryPurchaseFlow() {
   const handleQuickReorder = (order: Order) => {
     let addedCount = 0;
     
-    order.items.forEach(item => {
+    (order.items ?? []).forEach(item => {
       // Find the product in our catalog
       const product = allProducts.find((p: any) => 
         p.name.toLowerCase().includes(item.name.toLowerCase()) ||
@@ -73,7 +73,7 @@ export default function HistoryPurchaseFlow() {
   };
 
   const handleEditOrder = (order: Order) => {
-    const items: EditableOrderItem[] = order.items.map(item => ({
+    const items: EditableOrderItem[] = (order.items ?? []).map(item => ({
       name: item.name,
       originalQuantity: item.quantity,
       newQuantity: item.quantity,
@@ -164,14 +164,14 @@ export default function HistoryPurchaseFlow() {
                   <div>
                     <CardTitle className="text-lg">{order.id}</CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      {formatDate(order.date)} • {order.customer}
+                      {formatDate(order.date)} • {order.customer || ""}
                     </p>
                   </div>
                   <div className="text-right">
                     <Badge variant="outline" className="mb-2">
                       {order.status === "completed" ? "Completado" : "Entregado"}
                     </Badge>
-                    <p className="font-semibold">{formatPrice(order.total)}</p>
+                    <p className="font-semibold">{formatPrice(order.total ?? 0)}</p>
                   </div>
                 </div>
               </CardHeader>
@@ -219,7 +219,7 @@ export default function HistoryPurchaseFlow() {
                   // View mode
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      {order.items.map((item, index) => (
+                      {(order.items ?? []).map((item, index) => (
                         <div key={index} className="flex justify-between text-sm">
                           <span>{item.name}</span>
                           <span>{item.quantity}x {formatPrice(item.price)}</span>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProductCard from "@/components/loyalty/ProductCard";
 import SuccessAlert from "@/components/loyalty/SuccessAlert";
@@ -24,6 +24,18 @@ export const ClientLoyaltyView: React.FC<ClientLoyaltyViewProps> = ({
   const [redeemSuccess, setRedeemSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [userPoints, setUserPoints] = useState<number>(totalPoints);
+
+  // Keep local points in sync with prop
+  useEffect(() => {
+    setUserPoints(totalPoints ?? 0);
+  }, [totalPoints]);
+
+  // Refetch available rewards when points change on the 'all' tab
+  useEffect(() => {
+    if (activeTab === "all") {
+      fetchPublicRewards();
+    }
+  }, [userPoints]);
 
   // Use the public loyalty rewards hook
   const { 
@@ -96,7 +108,7 @@ export const ClientLoyaltyView: React.FC<ClientLoyaltyViewProps> = ({
     <>
       <SuccessAlert visible={redeemSuccess} />
       <div className="w-full fade-in">
-        <Tabs defaultValue="all" className="w-full" value={activeTab} onValueChange={setActiveTab}>
+        <Tabs defaultValue="all" className="w-full" value={activeTab} onValueChange={handleTabChange}>
           <TabsList className={`w-full ${isMobile ? 'grid grid-cols-2 gap-2 mb-3' : 'grid grid-cols-5 gap-2'} h-auto mb-6 rounded-lg`}>
             <TabsTrigger value="all" className={`py-2.5 ${isMobile ? 'text-sm' : 'text-base'}`}>Todos</TabsTrigger>
             <TabsTrigger value="product" className={`py-2.5 ${isMobile ? 'text-sm' : 'text-base'}`}>Productos</TabsTrigger>

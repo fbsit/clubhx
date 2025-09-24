@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,8 +11,7 @@ import { TIER_CONFIG } from "@/types/loyalty";
 import { fetchMyLoyaltyPoints } from "@/services/loyaltyApi";
 import ClientLoyaltyView from "@/components/loyalty/ClientLoyaltyView";
 import { useMyRedemptions } from "@/hooks/useLoyaltyRewards";
-
-const AdminLoyaltyProducts = lazy(() => import("@/pages/admin/AdminLoyaltyProducts").then(m => ({ default: m.default })));
+import AdminLoyaltyProducts from "@/pages/admin/AdminLoyaltyProducts";
 
 export default function Loyalty() {
   const { user } = useAuth();
@@ -53,9 +52,7 @@ export default function Loyalty() {
     return (
       <div className="container max-w-7xl py-6 animate-enter">
         <h1 className="text-3xl font-bold mb-6">Gestión del Programa de Lealtad</h1>
-        <Suspense fallback={<div className="text-sm text-muted-foreground">Cargando…</div>}>
-          <AdminLoyaltyProducts />
-        </Suspense>
+        <AdminLoyaltyProducts />
       </div>
     );
   }

@@ -34,14 +34,26 @@ export class ProductsController {
 
   // New: categories and brands proxied under product namespace for convenience
   @Get('/categories')
-  async listCategories(@Res() res: Response) {
-    const upstream = await this.api.request('get', '/api/v1/prodcategories/', {});
+  async listCategories(@Res() res: Response, @Headers('authorization') authorization?: string) {
+    const authHeader = authorization
+      ? (authorization.startsWith('Bearer ') ? `Token ${authorization.slice(7)}` : authorization)
+      : undefined;
+    const upstream = await this.api.request('get', '/api/v1/prodcategories/', {
+      headers: authHeader ? { Authorization: authHeader } : undefined,
+      useAuthHeader: authHeader ? false : undefined,
+    });
     return res.status(upstream.status).send(upstream.data);
   }
 
   @Get('/brands')
-  async listBrands(@Res() res: Response) {
-    const upstream = await this.api.request('get', '/api/v1/prodcategories/', {});
+  async listBrands(@Res() res: Response, @Headers('authorization') authorization?: string) {
+    const authHeader = authorization
+      ? (authorization.startsWith('Bearer ') ? `Token ${authorization.slice(7)}` : authorization)
+      : undefined;
+    const upstream = await this.api.request('get', '/api/v1/prodcategories/', {
+      headers: authHeader ? { Authorization: authHeader } : undefined,
+      useAuthHeader: authHeader ? false : undefined,
+    });
     return res.status(upstream.status).send(upstream.data);
   }
 

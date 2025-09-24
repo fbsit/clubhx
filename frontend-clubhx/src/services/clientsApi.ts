@@ -63,6 +63,10 @@ export class ClientsApiService {
     const url = search.toString() ? `${this.baseUrl}?${search.toString()}` : this.baseUrl;
     return fetchJson<PaginatedClientsResponse>(url);
   }
+
+  async getCurrentClient(): Promise<ClientDto> {
+    return fetchJson<ClientDto>(`/api/v1/client/me`);
+  }
 }
 
 export const clientsApi = new ClientsApiService();

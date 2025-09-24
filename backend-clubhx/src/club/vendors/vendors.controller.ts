@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post } from '@nestjs/common';
 import { VendorsService } from './vendors.service';
 
 @Controller('api/v1/vendors')
@@ -6,8 +6,8 @@ export class VendorsController {
   constructor(private readonly service: VendorsService) {}
 
   @Get()
-  list() {
-    return this.service.list();
+  list(@Headers('authorization') authorization?: string) {
+    return this.service.list(authorization);
   }
 
   @Get(':id')

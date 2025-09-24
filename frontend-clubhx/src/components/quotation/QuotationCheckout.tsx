@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuotation } from "@/contexts/QuotationContext";
 import QuotationStepProgress from "./checkout/QuotationStepProgress";
 import QuotationSummary from "./checkout/QuotationSummary";
@@ -8,15 +9,18 @@ import DeliveryMethodStep from "./checkout/DeliveryMethodStep";
 import ConfirmStep from "./checkout/ConfirmStep";
 import SuccessView from "./checkout/SuccessView";
 import { toast } from "sonner";
-import { createOrder } from "@/services/ordersApi";
+import { submitOrder } from "@/services/ordersApi";
+import type { AddressPayload } from "@/services/addressesApi";
 
 export default function QuotationCheckout() {
   const { items, totalAmount, clearQuotation } = useQuotation();
+  const { user } = useAuth();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [notes, setNotes] = useState("");
   const [deliveryMethod] = useState<"delivery">("delivery");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] = useState<AddressPayload | null>(null);
 
   // Calculate shipping cost for delivery
   const getShippingCost = () => {
@@ -26,19 +30,61 @@ export default function QuotationCheckout() {
   const handleSubmitQuotation = async () => {
     try {
       setLoading(true);
+      const defaultStore = '229a1e29-7191-43d4-9b99-4bd190d177b6';// (import.meta as any)?.env?.VITE_DEFAULT_STORE_ID as string | undefined;
+      const defaultSeller = 'c50994df-90e2-4551-bcd0-32e4dc70a11f';// (import.meta as any)?.env?.VITE_DEFAULT_SELLER_ID as string | undefined;
+      console.log(user);
+      const clientId = user?.id;
+      const sellerId = defaultSeller;
+      const storeId = defaultStore;
+
+      if (!clientId || !sellerId || !storeId) {
+        throw new Error("Faltan identificadores (cliente, vendedor o tienda). Configura VITE_DEFAULT_STORE_ID y VITE_DEFAULT_SELLER_ID si aplica.");
+      }
+
+      if (!deliveryAddress) {
+        setStep(2);
+        throw new Error("Selecciona o crea una dirección de entrega antes de continuar.");
+      }
+
       const payload = {
-        items: items.map(i => ({ product: i.product.id, quantity: i.quantity })),
-        notes,
-        // Opcionales: agrega si los manejas en UI
-        // shipping_type: selectedShippingId,
-        // payment_method: selectedPaymentId,
-      };
-      await createOrder(payload);
+        client: String(clientId),
+        seller: String(sellerId),
+        store: String(storeId),
+        discount_requested: false,
+        items: items.map(i => ({
+          product: i.product.id,
+          quantity: i.quantity,
+          price: i.product.price,
+          discount_percentage: i.product.discount ?? 0,
+        })),
+        comments: notes,
+        shipping_type: deliveryMethod,
+        // Mapear dirección de entrega
+        address: [
+          deliveryAddress.street,
+          deliveryAddress.number && `#${deliveryAddress.number}`,
+          deliveryAddress.apartment && deliveryAddress.apartment,
+        ].filter(Boolean).join(' '),
+        municipality: deliveryAddress.commune,
+        city: deliveryAddress.city,
+        region: deliveryAddress.region,
+        phone: deliveryAddress.phone,
+        // Otros campos pueden mapearse desde futuros pasos del checkout
+      } as const;
+
+      const resp = await submitOrder(payload);
+      if (resp?.ok && resp?.success_url) {
+        setSubmitted(true);
+        clearQuotation();
+        toast.success("¡Pedido creado exitosamente!", { description: `ID: ${resp.id}` });
+        // Opcional: redirigir
+        // window.location.href = resp.success_url;
+      } else {
+        throw new Error("No se pudo crear el pedido");
+      }
       setSubmitted(true);
       clearQuotation();
-      toast.success("¡Cotización enviada exitosamente!", {
-        description: "Te contactaremos pronto con una respuesta.",
-      });
+      toast.success("¡Cotización enviada exitosamente!", { description: "Te contactaremos pronto con una respuesta." });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error al enviar la cotización";
       toast.error(message);
@@ -104,6 +150,7 @@ export default function QuotationCheckout() {
             <DeliveryMethodStep 
               onNext={nextStep}
               onPrev={prevStep}
+              onAddressSelected={(addr) => setDeliveryAddress(addr)}
             />
           )}
           

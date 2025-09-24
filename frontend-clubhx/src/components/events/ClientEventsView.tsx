@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin, Users, ExternalLink, CalendarPlus } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, ExternalLink, CalendarPlus, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -53,6 +53,15 @@ export default function ClientEventsView() {
       </TabsList>
       
       <TabsContent value="upcoming" className="mt-0">
+        {events.filter(event => !event.isPast).length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">No hay eventos próximos</h3>
+              <p className="text-muted-foreground">Vuelve más tarde para ver nuevos eventos.</p>
+            </CardContent>
+          </Card>
+        ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {events.filter(event => !event.isPast).map(event => {
             const myReg = registrations.find(r => r.eventId === event.id);
@@ -144,9 +153,19 @@ export default function ClientEventsView() {
             </Card>
           );})}
         </div>
+        )}
       </TabsContent>
       
       <TabsContent value="past" className="mt-0">
+        {events.filter(event => event.isPast).length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">No hay eventos pasados</h3>
+              <p className="text-muted-foreground">Cuando participes en eventos, los verás aquí.</p>
+            </CardContent>
+          </Card>
+        ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {events.filter(event => event.isPast).map(event => (
             <Card key={event.id} className="overflow-hidden flex flex-col opacity-80">
@@ -201,6 +220,7 @@ export default function ClientEventsView() {
             </Card>
           ))}
         </div>
+        )}
       </TabsContent>
       
       {selectedEvent && (

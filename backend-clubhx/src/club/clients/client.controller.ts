@@ -1,27 +1,22 @@
-import { Controller, Get, Headers, HttpCode, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Get, Headers, HttpCode, HttpStatus } from '@nestjs/common';
 import { ClientsService } from './clients.service';
 
-@Controller('api/v1/clients')
-export class ClientsController {
+@Controller('api/v1/client')
+export class ClientController {
   constructor(private readonly clientsService: ClientsService) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  async findAll(
-    @Query('limit') limit?: number,
-    @Query('offset') offset?: number,
-    @Headers('authorization') authorization?: string,
-  ) {
+  async getMe(@Headers('authorization') authorization?: string) {
     const authHeader = authorization
       ? (authorization.startsWith('Bearer ') ? `Token ${authorization.slice(7)}` : authorization)
       : undefined;
-    return this.clientsService.fetchClients({ limit, offset }, authHeader);
+    return this.clientsService.fetchCurrentClient(authHeader);
   }
 
-  // Current client info using upstream token
-  @Get('/me')
+  @Get('me')
   @HttpCode(HttpStatus.OK)
-  async getCurrent(@Headers('authorization') authorization?: string) {
+  async getMeAlias(@Headers('authorization') authorization?: string) {
     const authHeader = authorization
       ? (authorization.startsWith('Bearer ') ? `Token ${authorization.slice(7)}` : authorization)
       : undefined;
