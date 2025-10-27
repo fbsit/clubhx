@@ -31,7 +31,7 @@ export default function QuotationCheckout() {
     try {
       setLoading(true);
       const defaultStore = '229a1e29-7191-43d4-9b99-4bd190d177b6';// (import.meta as any)?.env?.VITE_DEFAULT_STORE_ID as string | undefined;
-      const defaultSeller = 'c50994df-90e2-4551-bcd0-32e4dc70a11f';// (import.meta as any)?.env?.VITE_DEFAULT_SELLER_ID as string | undefined;
+      const defaultSeller = user?.providerSellerPk;
       console.log(user);
       const clientId = user?.id;
       const sellerId = defaultSeller;

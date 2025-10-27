@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { User, UserRole } from "@/types/auth";
 import { setSessionTimeout, clearSession, setAuthToken } from "@/utils/sessionUtils";
-import { loginApi } from "@/services/authApi";
+import { loginApi, clientLoginApi } from "@/services/authApi";
 import { clientsApi } from "@/services/clientsApi";
 import { handleError } from "@/utils/errorUtils";
 
@@ -33,7 +33,7 @@ export const useAuthMethods = (
       if (!isTester) {
         // Real API call for non-tester emails
         const { token } = await loginApi(email, password);
-        setAuthToken(token);
+        setAuthToken(token, 'bearer');
         // Immediately fetch current client info using token
         try {
           const client = await clientsApi.getCurrentClient();
@@ -49,7 +49,7 @@ export const useAuthMethods = (
             company: resolvedCompany,
             role: 'client',
             providerClientPk: resolvedId != null ? String(resolvedId) : undefined,
-            providerSellerPk: c.seller != null ? String(c.seller) : undefined,
+            providerSellerPk: c.seller ? String((typeof c.seller === 'object' && c.seller.id) ? c.seller.id : c.seller) : undefined,
           } as Partial<User>;
         } catch (e) {
           // If fetching client fails, continue with fallback user; errors are shown elsewhere
@@ -142,6 +142,57 @@ export const useAuthMethods = (
     }
   };
 
+  const loginClient = async (identification: string, secret: string) => {
+    setIsLoading(true);
+    try {
+      const { token } = await clientLoginApi(identification, secret);
+      setAuthToken(token, 'client');
+
+      // Try to fetch current client profile after client login
+      let fetchedUserFromApi: Partial<User> | null = null;
+      try {
+        const client = await clientsApi.getCurrentClient();
+        const c: any = client as any;
+        const fullName = `${(c.first_name || '').trim()} ${(c.last_name || '').trim()}`.trim();
+        const resolvedName = fullName || c.name || c.fantasy_name || c.real_client || 'Cliente';
+        const resolvedCompany = c.company || c.fantasy_name || c.real_client || 'Mi Empresa';
+        const resolvedId = c.id ?? c.pk ?? c.nfk;
+        fetchedUserFromApi = {
+          id: resolvedId != null ? String(resolvedId) : undefined,
+          email: c.email || '',
+          name: resolvedName,
+          company: resolvedCompany,
+          role: 'client',
+          providerClientPk: resolvedId != null ? String(resolvedId) : undefined,
+          providerSellerPk: c.seller ? String((typeof c.seller === 'object' && c.seller.id) ? c.seller.id : c.seller) : undefined,
+        } as Partial<User>;
+      } catch {}
+
+      const user: User = {
+        id: fetchedUserFromApi?.id || `user-client-${Date.now()}`,
+        providerClientPk: fetchedUserFromApi?.providerClientPk || undefined,
+        providerSellerPk: fetchedUserFromApi?.providerSellerPk || undefined,
+        email: fetchedUserFromApi?.email || '',
+        name: fetchedUserFromApi?.name || 'Cliente',
+        company: fetchedUserFromApi?.company || 'Mi Empresa',
+        role: 'client',
+        status: 'active',
+        createdAt: new Date().toISOString(),
+      };
+
+      localStorage.setItem("clubhx-user", JSON.stringify(user));
+      setUser(user);
+      setupSessionTimeout();
+      navigate("/main/products");
+      toast.success(`¡Bienvenido a CLUB HX!`);
+    } catch (error) {
+      toast.error("Error al iniciar sesión como cliente");
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const register = async (userData: Partial<User>, password: string) => {
     setIsLoading(true);
     try {
@@ -184,9 +235,16 @@ export const useAuthMethods = (
   const registerClient = async (registrationData: any) => {
     setIsLoading(true);
     try {
-      const { submitRegistration } = await import("@/services/registrationApi");
-      await submitRegistration(registrationData);
-      toast.success("Solicitud de registro enviada exitosamente");
+      const { clientRegister } = await import("@/services/registrationApi");
+      const payload = {
+        rut: registrationData.rut,
+        name: registrationData.contactName ?? registrationData.companyName,
+        email: registrationData.email,
+        phone: registrationData.phone,
+        password: registrationData.password,
+      } as { rut: string; name: string; email: string; phone: string; password: string };
+      await clientRegister(payload);
+      toast.success("Registro enviado. Revisa tu correo para continuar.");
     } catch (error: any) {
       toast.error(error?.message || "Error al enviar la solicitud de registro");
       throw error;
@@ -257,6 +315,7 @@ export const useAuthMethods = (
 
   return {
     login,
+    loginClient,
     logout,
     register,
     registerClient,

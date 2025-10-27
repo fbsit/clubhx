@@ -19,6 +19,7 @@ export interface RegistrationFormData {
   contactName: string;
   email: string;
   phone: string;
+  password?: string;
   address: string;
   commune: string;
   region: string;

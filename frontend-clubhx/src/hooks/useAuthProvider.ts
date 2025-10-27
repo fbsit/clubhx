@@ -57,6 +57,7 @@ export const useAuthProvider = () => {
   // Authentication methods
   const { 
     login, 
+    loginClient,
     logout, 
     updateUserProfile, 
     register, 
@@ -93,6 +94,7 @@ export const useAuthProvider = () => {
     isLoading,
     isInitialized,
     login,
+    loginClient,
     logout,
     register,
     registerClient,

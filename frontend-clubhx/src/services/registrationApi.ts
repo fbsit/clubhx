@@ -45,4 +45,10 @@ export async function sendVerificationCode(email: string): Promise<{ sent: boole
   });
 }
 
-
+export async function clientRegister(payload: { rut: string; name: string; email: string; phone: string; password: string }) {
+  return fetchJson(`/api/client-register/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}

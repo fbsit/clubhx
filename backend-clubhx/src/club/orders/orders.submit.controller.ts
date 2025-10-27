@@ -97,8 +97,8 @@ export class OrdersSubmitController {
         : authorization
       : undefined;
 
-    // Create order upstream (maintain current upstream path)
-    const upstream = await this.api.request<any>('post', '/api/v1/order-create/', {
+    // Create order upstream using no-store path
+    const upstream = await this.api.request<any>('post', '/api/v1/order-create-no-store/', {
       body: payloadForUpstream,
       headers: authHeader ? { Authorization: authHeader } : undefined,
       useAuthHeader: authHeader ? false : undefined,

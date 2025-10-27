@@ -11,14 +11,18 @@ import ClientRegistrationFlow from "@/components/auth/ClientRegistrationFlow";
 import ForgotPasswordDialog from "@/components/auth/ForgotPasswordDialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, TestTube, UserPlus } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [identification, setIdentification] = useState("");
+  const [secret, setSecret] = useState("");
+  const [mode, setMode] = useState<"client" | "seller">("client");
   const [showQAGuide, setShowQAGuide] = useState(false);
   const [showRegistration, setShowRegistration] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const { login, isLoading } = useAuth();
+  const { login, loginClient, isLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -28,7 +32,11 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(email, password);
+      if (mode === "client") {
+        await loginClient(identification, secret);
+      } else {
+        await login(email, password);
+      }
       // Navigation is handled inside login function based on user role
     } catch (error) {
       console.error("Login failed:", error);
@@ -74,79 +82,116 @@ export default function Login() {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Correo Electrónico</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="nombre@empresa.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-11"
-              />
-            </div>
+              <Tabs value={mode} onValueChange={(v) => setMode(v as any)}>
+                <TabsList className="w-full grid grid-cols-2">
+                  <TabsTrigger value="client">Cliente</TabsTrigger>
+                  <TabsTrigger value="seller">Vendedor</TabsTrigger>
+                </TabsList>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Contraseña</Label>
-                <button
-                  type="button"
-                  onClick={() => setShowForgotPassword(true)}
-                  className="text-sm font-medium text-primary hover:underline"
-                >
-                  ¿Olvidaste tu contraseña?
-                </button>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-11"
-              />
-            </div>
+                <TabsContent value="client" className="mt-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="identification">RUT</Label>
+                    <Input
+                      id="identification"
+                      placeholder="12.345.678-9"
+                      value={identification}
+                      onChange={(e) => setIdentification(e.target.value)}
+                      required
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="secret">Contraseña</Label>
+                    <Input
+                      id="secret"
+                      type="password"
+                      placeholder="••••••••"
+                      value={secret}
+                      onChange={(e) => setSecret(e.target.value)}
+                      required
+                      className="h-11"
+                    />
+                  </div>
+                </TabsContent>
 
-            {/* Quick Access for Testing */}
-            <Collapsible>
-              <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
-                <TestTube className="h-4 w-4" />
-                Acceso rápido para testing
-                <ChevronDown className="h-4 w-4" />
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-2 pt-2">
-                <div className="grid grid-cols-3 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuickLogin("admin@clubhx.com", "admin123")}
-                    className="text-xs"
-                  >
-                    Admin
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuickLogin("sales@clubhx.com", "sales123")}
-                    className="text-xs"
-                  >
-                    Sales
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuickLogin("client@clubhx.com", "client123")}
-                    className="text-xs"
-                  >
-                    Client
-                  </Button>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+                <TabsContent value="seller" className="mt-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Correo Electrónico</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="nombre@empresa.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required={mode === 'seller'}
+                      className="h-11"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password">Contraseña</Label>
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotPassword(true)}
+                        className="text-sm font-medium text-primary hover:underline"
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </button>
+                    </div>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required={mode === 'seller'}
+                      className="h-11"
+                    />
+                  </div>
+
+                  {/* Quick Access for Testing */}
+                  <Collapsible>
+                    <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+                      <TestTube className="h-4 w-4" />
+                      Acceso rápido para testing
+                      <ChevronDown className="h-4 w-4" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="space-y-2 pt-2">
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleQuickLogin("admin@clubhx.com", "admin123")}
+                          className="text-xs"
+                        >
+                          Admin
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleQuickLogin("sales@clubhx.com", "sales123")}
+                          className="text-xs"
+                        >
+                          Sales
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleQuickLogin("client@clubhx.com", "client123")}
+                          className="text-xs"
+                        >
+                          Client
+                        </Button>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </TabsContent>
+              </Tabs>
+            </div>
           </CardContent>
 
           <CardFooter className="flex flex-col gap-3">
@@ -155,7 +200,7 @@ export default function Login() {
               className="w-full h-11"
               disabled={isLoading}
             >
-              {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
+              {isLoading ? "Iniciando sesión..." : "Ingresar"}
             </Button>
             
             <div className="text-center">

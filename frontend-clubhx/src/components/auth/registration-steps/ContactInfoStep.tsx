@@ -27,6 +27,21 @@ export default function ContactInfoStep({ data, onUpdate }: ContactInfoStepProps
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="password" className="text-sm font-medium">
+          Contraseña *
+        </Label>
+        <Input
+          id="password"
+          type="password"
+          placeholder="••••••••"
+          value={(data as any).password || ''}
+          onChange={(e) => onUpdate({ password: (e.target as HTMLInputElement).value } as any)}
+          className="h-11"
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="email" className="text-sm font-medium">
           Correo Electrónico *
         </Label>

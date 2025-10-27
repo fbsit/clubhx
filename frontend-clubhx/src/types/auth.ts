@@ -82,6 +82,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isInitialized: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginClient: (identification: string, secret: string) => Promise<void>;
   logout: () => void;
   register: (userData: Partial<User>, password: string) => Promise<void>;
   registerClient: (registrationData: Omit<ClientRegistrationRequest, 'id' | 'status' | 'createdAt' | 'emailVerified'>) => Promise<void>;

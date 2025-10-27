@@ -11,7 +11,7 @@ export class OrdersCreateController {
     const authHeader = authorization
       ? (authorization.startsWith('Bearer ') ? `Token ${authorization.slice(7)}` : authorization)
       : undefined;
-    const upstream = await this.api.request('post', '/api/v1/order-create/', { 
+    const upstream = await this.api.request('post', '/api/v1/order-create-no-store/', { 
       body,
       headers: authHeader ? { Authorization: authHeader } : undefined,
       useAuthHeader: authHeader ? false : undefined,
