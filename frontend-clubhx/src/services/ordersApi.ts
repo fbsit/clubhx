@@ -78,6 +78,16 @@ export async function submitOrder(payload: SubmitOrderDto) {
   });
 }
 
+export interface ShippingTypeDto {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export async function listShippingTypes(): Promise<ShippingTypeDto[]> {
+  return fetchJson(`/api/v1/shippingtype/`);
+}
+
 export interface OrdersListParams {
   limit?: number;
   offset?: number;

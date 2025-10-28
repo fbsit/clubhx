@@ -8,19 +8,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChevronRight, Truck, MapPin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { AddressPayload, createAddress, listAddresses } from "@/services/addressesApi";
+import { listShippingTypes, type ShippingTypeDto } from "@/services/ordersApi";
 
 type DeliveryMethodStepProps = {
   onNext: () => void;
   onPrev: () => void;
   onAddressSelected: (address: AddressPayload) => void;
+  onShippingTypeSelected: (shippingTypeId: string) => void;
 };
 
 const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({ 
   onNext, 
   onPrev,
   onAddressSelected,
+  onShippingTypeSelected,
 }) => {
   const { user } = useAuth();
+  const [shippingTypes, setShippingTypes] = useState<ShippingTypeDto[]>([]);
+  const [selectedShippingTypeId, setSelectedShippingTypeId] = useState<string | null>(null);
   const [useCustomAddress, setUseCustomAddress] = useState(true);
   const [customAddress, setCustomAddress] = useState({
     name: "Entrega",
@@ -51,6 +56,13 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
         const def = (list || []).find((a: AddressPayload) => a.isDefault) || (list || [])[0] || null;
         setSelectedId(def?.id || null);
         setUseCustomAddress(!(list && list.length > 0));
+
+        // Load shipping types
+        const st = await listShippingTypes();
+        setShippingTypes(st || []);
+        const defShippingTypeId = (st && st[0]?.id) || null;
+        setSelectedShippingTypeId(defShippingTypeId);
+        if (defShippingTypeId) onShippingTypeSelected(defShippingTypeId);
       } catch (e) {
         setError("No se pudieron cargar las direcciones");
       } finally {
@@ -113,6 +125,29 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label className="text-sm">Tipo de envío</Label>
+          {shippingTypes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Cargando tipos de envío…</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {shippingTypes.map((st) => (
+                <label key={st.id} className={`flex items-center gap-2 p-3 rounded border cursor-pointer ${selectedShippingTypeId === st.id ? 'border-primary' : ''}`}>
+                  <input
+                    type="radio"
+                    name="shippingType"
+                    checked={selectedShippingTypeId === st.id}
+                    onChange={() => { setSelectedShippingTypeId(st.id); onShippingTypeSelected(st.id); }}
+                  />
+                  <div>
+                    <p className="font-medium text-sm">{st.name}</p>
+                    {st.description && <p className="text-xs text-muted-foreground">{st.description}</p>}
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="flex items-start space-x-3 p-4 rounded-lg border-2 border-primary bg-primary/5">
           <div className="flex-1">
             <div className="flex items-center">

@@ -18,6 +18,7 @@ export default function QuotationCheckout() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [notes, setNotes] = useState("");
   const [deliveryMethod] = useState<"delivery">("delivery");
+  const [shippingTypeId, setShippingTypeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState<AddressPayload | null>(null);
@@ -58,7 +59,7 @@ export default function QuotationCheckout() {
           discount_percentage: i.product.discount ?? 0,
         })),
         comments: notes,
-        shipping_type: deliveryMethod,
+        shipping_type: String(shippingTypeId || ''),
         // Mapear dirección de entrega
         address: [
           deliveryAddress.street,
@@ -151,6 +152,7 @@ export default function QuotationCheckout() {
               onNext={nextStep}
               onPrev={prevStep}
               onAddressSelected={(addr) => setDeliveryAddress(addr)}
+              onShippingTypeSelected={(id) => setShippingTypeId(id)}
             />
           )}
           

@@ -15,6 +15,21 @@ function normalizeNumberLike(value: unknown): number | null {
   return Number.isFinite(num) ? num : null;
 }
 
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function normalizeAliasToUuid(value: unknown, envPrefix: string): string | null {
+  const raw = (value as UnknownRecord | undefined)?.id ?? value;
+  const str = String(raw ?? '').trim();
+  if (!str) return null;
+  if (isUuid(str)) return str;
+  const alias = str.toUpperCase().replace(/[^A-Z0-9]+/g, '_');
+  const envVar = `${envPrefix}_${alias}_ID`;
+  const mapped = process.env[envVar];
+  return mapped && isUuid(mapped) ? mapped : null;
+}
+
 @Controller()
 export class OrdersSubmitController {
   constructor(private readonly api: ClubApiService) {}
@@ -61,6 +76,30 @@ export class OrdersSubmitController {
       };
     });
 
+    // Map fields and validate requireds
+    const paymentMethod = normalizeAliasToUuid(body?.payment_method, 'PAYMENT_METHOD');
+    if (!paymentMethod) {
+      throw new BadRequestException('payment_method es obligatorio y debe ser un UUID válido o alias configurado (env PAYMENT_METHOD_<ALIAS>_ID)');
+    }
+
+    const shippingType = normalizeAliasToUuid(body?.shipping_type, 'SHIPPING_TYPE');
+    if (!shippingType) {
+      throw new BadRequestException('shipping_type debe ser un UUID válido o alias configurado (env SHIPPING_TYPE_<ALIAS>_ID)');
+    }
+
+    const shippingDate = (body?.shipping_date as string | undefined) ?? undefined;
+    if (!shippingDate) {
+      throw new BadRequestException('shipping_date es obligatorio');
+    }
+
+    const typeInput = (body?.type as string | undefined) ?? undefined;
+    const typeMapped = !typeInput ? 'bill' : typeInput === 'order' ? 'bill' : typeInput;
+
+    const payment_amount = normalizeNumberLike(body?.payment_amount);
+    const shipping_cost = normalizeNumberLike(body?.shipping_cost);
+    const global_discount = normalizeNumberLike(body?.global_discount);
+    const global_discount_percentage = normalizeNumberLike(body?.global_discount_percentage);
+
     const payloadForUpstream: UnknownRecord = {
       client,
       seller,
@@ -69,7 +108,7 @@ export class OrdersSubmitController {
       defontana_client_id: body?.defontana_client_id ?? null,
       items,
       module_items,
-      type: body?.type ?? 'order',
+      type: typeMapped,
       name: body?.name,
       tin: body?.tin,
       address: body?.address,
@@ -77,17 +116,17 @@ export class OrdersSubmitController {
       city: body?.city,
       phone: body?.phone,
       email: body?.email,
-      payment_method: body?.payment_method,
+      payment_method: paymentMethod,
       payment_on_time: body?.payment_on_time,
-      payment_amount: normalizeNumberLike(body?.payment_amount),
+      ...(payment_amount != null ? { payment_amount } : {}),
       payment_date: body?.payment_date,
-      shipping_type: body?.shipping_type,
-      shipping_date: body?.shipping_date,
-      shipping_cost: normalizeNumberLike(body?.shipping_cost),
+      shipping_type: shippingType,
+      shipping_date: shippingDate,
+      ...(shipping_cost != null ? { shipping_cost } : {}),
       comments: body?.comments,
       extra_info: body?.extra_info,
-      global_discount: normalizeNumberLike(body?.global_discount),
-      global_discount_percentage: normalizeNumberLike(body?.global_discount_percentage),
+      ...(global_discount != null ? { global_discount } : {}),
+      ...(global_discount_percentage != null ? { global_discount_percentage } : {}),
       client_purchase_order_number: body?.client_purchase_order_number,
     };
 
