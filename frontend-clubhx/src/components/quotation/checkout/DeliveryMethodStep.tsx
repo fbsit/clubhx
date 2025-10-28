@@ -15,6 +15,7 @@ type DeliveryMethodStepProps = {
   onPrev: () => void;
   onAddressSelected: (address: AddressPayload) => void;
   onShippingTypeSelected: (shippingTypeId: string) => void;
+  onPaymentMethodSelected: (paymentMethodId: string) => void;
 };
 
 const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({ 
@@ -22,6 +23,7 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
   onPrev,
   onAddressSelected,
   onShippingTypeSelected,
+  onPaymentMethodSelected,
 }) => {
   const { user } = useAuth();
   const [shippingTypes, setShippingTypes] = useState<ShippingTypeDto[]>([]);
@@ -62,8 +64,9 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
 
         // Load shipping types
         const st = await listShippingTypes();
-        setShippingTypes(st || []);
-        const defShippingTypeId = (st && st[0]?.id) || null;
+        const valid = Array.isArray(st) ? st.filter(x => x && typeof x.id === 'string' && x.id.length > 0) : [];
+        setShippingTypes(valid);
+        const defShippingTypeId = (valid && valid[0]?.id) || null;
         setSelectedShippingTypeId(defShippingTypeId);
         if (defShippingTypeId) onShippingTypeSelected(defShippingTypeId);
 
@@ -72,6 +75,7 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
         setPaymentMethods(pm || []);
         const defPaymentMethodId = (pm && pm[0]?.id) || null;
         setSelectedPaymentMethodId(defPaymentMethodId);
+        if (defPaymentMethodId) onPaymentMethodSelected(defPaymentMethodId);
       } catch (e) {
         setError("No se pudieron cargar las direcciones");
       } finally {
@@ -170,7 +174,7 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
                     type="radio"
                     name="paymentMethod"
                     checked={selectedPaymentMethodId === pm.id}
-                    onChange={() => setSelectedPaymentMethodId(pm.id)}
+                    onChange={() => { setSelectedPaymentMethodId(pm.id); onPaymentMethodSelected(pm.id); }}
                   />
                   <div>
                     <p className="font-medium text-sm">{pm.name}</p>

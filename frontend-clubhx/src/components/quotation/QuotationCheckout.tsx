@@ -62,6 +62,7 @@ export default function QuotationCheckout() {
         comments: notes,
         payment_method: String(paymentMethodId || ''),
         shipping_type: String(shippingTypeId || ''),
+        shipping_date: new Date().toISOString(),
         // Mapear dirección de entrega
         address: [
           deliveryAddress.street,
@@ -155,8 +156,7 @@ export default function QuotationCheckout() {
               onPrev={prevStep}
               onAddressSelected={(addr) => setDeliveryAddress(addr)}
               onShippingTypeSelected={(id) => setShippingTypeId(id)}
-              // capture payment method selection via step 2 UI as well
-              // We reuse the local setter via closure (selected in DeliveryMethodStep)
+              onPaymentMethodSelected={(id) => setPaymentMethodId(id)}
             />
           )}
           

@@ -46,6 +46,8 @@ export interface SubmitOrderDto {
   client_purchase_order_number?: string | boolean;
 }
 
+export type CreateOrderNoStoreDto = SubmitOrderDto;
+
 export async function createOrderNoStore(payload: CreateOrderNoStoreDto) {
   return fetchJson(`/api/v1/order-create-no-store/`, {
     method: "POST",
@@ -95,9 +97,13 @@ export async function listShippingTypes(): Promise<ShippingTypeDto[]> {
       : Array.isArray(resp?.data)
         ? resp.data
         : [];
+  const isUuid = (v: unknown) => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
   return list
     .map((it) => ({
-      id: String(it?.id ?? it?.pk ?? ''),
+      id: (() => {
+        const cand = it?.uuid ?? it?.id ?? it?.pk ?? it?.value;
+        return isUuid(cand) ? String(cand) : '';
+      })(),
       name: String(it?.name ?? it?.title ?? it?.module_name ?? 'Shipping'),
       description: it?.description ?? undefined,
     }))
