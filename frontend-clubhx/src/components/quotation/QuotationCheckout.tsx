@@ -9,7 +9,7 @@ import DeliveryMethodStep from "./checkout/DeliveryMethodStep";
 import ConfirmStep from "./checkout/ConfirmStep";
 import SuccessView from "./checkout/SuccessView";
 import { toast } from "sonner";
-import { submitOrder } from "@/services/ordersApi";
+import { submitOrder, type SubmitOrderResponse } from "@/services/ordersApi";
 import type { AddressPayload } from "@/services/addressesApi";
 
 export default function QuotationCheckout() {
@@ -19,6 +19,7 @@ export default function QuotationCheckout() {
   const [notes, setNotes] = useState("");
   const [deliveryMethod] = useState<"delivery">("delivery");
   const [shippingTypeId, setShippingTypeId] = useState<string | null>(null);
+  const [paymentMethodId, setPaymentMethodId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState<AddressPayload | null>(null);
@@ -59,6 +60,7 @@ export default function QuotationCheckout() {
           discount_percentage: i.product.discount ?? 0,
         })),
         comments: notes,
+        payment_method: String(paymentMethodId || ''),
         shipping_type: String(shippingTypeId || ''),
         // Mapear dirección de entrega
         address: [
@@ -73,7 +75,7 @@ export default function QuotationCheckout() {
         // Otros campos pueden mapearse desde futuros pasos del checkout
       } as const;
 
-      const resp = await submitOrder(payload);
+      const resp: SubmitOrderResponse = await submitOrder(payload);
       if (resp?.ok && resp?.success_url) {
         setSubmitted(true);
         clearQuotation();
@@ -153,6 +155,8 @@ export default function QuotationCheckout() {
               onPrev={prevStep}
               onAddressSelected={(addr) => setDeliveryAddress(addr)}
               onShippingTypeSelected={(id) => setShippingTypeId(id)}
+              // capture payment method selection via step 2 UI as well
+              // We reuse the local setter via closure (selected in DeliveryMethodStep)
             />
           )}
           

@@ -70,8 +70,10 @@ export async function createOrder(payload: CreateOrderNoStoreDto) {
   });
 }
 
-export async function submitOrder(payload: SubmitOrderDto) {
-  return fetchJson(`/api/v1/order/submit`, {
+export type SubmitOrderResponse = { ok?: boolean; success_url?: string; id?: string };
+
+export async function submitOrder(payload: SubmitOrderDto): Promise<SubmitOrderResponse> {
+  return fetchJson<SubmitOrderResponse>(`/api/v1/order/submit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -85,7 +87,45 @@ export interface ShippingTypeDto {
 }
 
 export async function listShippingTypes(): Promise<ShippingTypeDto[]> {
-  return fetchJson(`/api/v1/shippingtype/`);
+  const resp = await fetchJson<any>(`/api/v1/shippingtype/`);
+  const list: any[] = Array.isArray(resp)
+    ? resp
+    : Array.isArray(resp?.results)
+      ? resp.results
+      : Array.isArray(resp?.data)
+        ? resp.data
+        : [];
+  return list
+    .map((it) => ({
+      id: String(it?.id ?? it?.pk ?? ''),
+      name: String(it?.name ?? it?.title ?? it?.module_name ?? 'Shipping'),
+      description: it?.description ?? undefined,
+    }))
+    .filter((it) => !!it.id);
+}
+
+export interface PaymentMethodDto {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export async function listPaymentMethods(): Promise<PaymentMethodDto[]> {
+  const resp = await fetchJson<any>(`/api/v1/paymentmethod/`);
+  const list: any[] = Array.isArray(resp)
+    ? resp
+    : Array.isArray(resp?.results)
+      ? resp.results
+      : Array.isArray(resp?.data)
+        ? resp.data
+        : [];
+  return list
+    .map((it) => ({
+      id: String(it?.id ?? it?.pk ?? ''),
+      name: String(it?.name ?? it?.title ?? 'Payment method'),
+      description: it?.description ?? undefined,
+    }))
+    .filter((it) => !!it.id);
 }
 
 export interface OrdersListParams {

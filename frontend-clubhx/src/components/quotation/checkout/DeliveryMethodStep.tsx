@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChevronRight, Truck, MapPin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { AddressPayload, createAddress, listAddresses } from "@/services/addressesApi";
-import { listShippingTypes, type ShippingTypeDto } from "@/services/ordersApi";
+import { listPaymentMethods, listShippingTypes, type PaymentMethodDto, type ShippingTypeDto } from "@/services/ordersApi";
 
 type DeliveryMethodStepProps = {
   onNext: () => void;
@@ -26,6 +26,8 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
   const { user } = useAuth();
   const [shippingTypes, setShippingTypes] = useState<ShippingTypeDto[]>([]);
   const [selectedShippingTypeId, setSelectedShippingTypeId] = useState<string | null>(null);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodDto[]>([]);
+  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string | null>(null);
   const [useCustomAddress, setUseCustomAddress] = useState(true);
   const [customAddress, setCustomAddress] = useState({
     name: "Entrega",
@@ -51,11 +53,12 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
       setError(null);
       try {
         const cid = String(user.providerClientPk || user.id);
-        const list = await listAddresses(cid);
-        setAddresses(list || []);
-        const def = (list || []).find((a: AddressPayload) => a.isDefault) || (list || [])[0] || null;
+        const list = (await listAddresses(cid)) as AddressPayload[];
+        const safeList: AddressPayload[] = Array.isArray(list) ? list : [];
+        setAddresses(safeList);
+        const def = (safeList).find((a: AddressPayload) => a.isDefault) || (safeList)[0] || null;
         setSelectedId(def?.id || null);
-        setUseCustomAddress(!(list && list.length > 0));
+        setUseCustomAddress(!(safeList && safeList.length > 0));
 
         // Load shipping types
         const st = await listShippingTypes();
@@ -63,6 +66,12 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
         const defShippingTypeId = (st && st[0]?.id) || null;
         setSelectedShippingTypeId(defShippingTypeId);
         if (defShippingTypeId) onShippingTypeSelected(defShippingTypeId);
+
+        // Load payment methods
+        const pm = await listPaymentMethods();
+        setPaymentMethods(pm || []);
+        const defPaymentMethodId = (pm && pm[0]?.id) || null;
+        setSelectedPaymentMethodId(defPaymentMethodId);
       } catch (e) {
         setError("No se pudieron cargar las direcciones");
       } finally {
@@ -88,7 +97,7 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
       if (!customAddress.street || !customAddress.city || !customAddress.region) return;
       setIsLoading(true);
       try {
-        const created = await createAddress({
+        const created = (await createAddress({
           customerId,
           name: customAddress.name || "Entrega",
           phone: customAddress.phone,
@@ -99,11 +108,11 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
           commune: customAddress.commune,
           region: customAddress.region,
           isDefault: false,
-        });
+        })) as AddressPayload;
         // Marcar como seleccionada para continuar
         setSelectedId(created.id!);
-        setAddresses(prev => [created, ...prev]);
-        onAddressSelected(created);
+        setAddresses((prev: AddressPayload[]) => [created, ...(prev || [])]);
+        onAddressSelected(created as AddressPayload);
         onNext();
       } finally {
         setIsLoading(false);
@@ -127,11 +136,11 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label className="text-sm">Tipo de envío</Label>
-          {shippingTypes.length === 0 ? (
+          {!Array.isArray(shippingTypes) || shippingTypes.length === 0 ? (
             <p className="text-sm text-muted-foreground">Cargando tipos de envío…</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {shippingTypes.map((st) => (
+              {Array.isArray(shippingTypes) && shippingTypes.map((st) => (
                 <label key={st.id} className={`flex items-center gap-2 p-3 rounded border cursor-pointer ${selectedShippingTypeId === st.id ? 'border-primary' : ''}`}>
                   <input
                     type="radio"
@@ -142,6 +151,30 @@ const DeliveryMethodStep: FC<DeliveryMethodStepProps> = ({
                   <div>
                     <p className="font-medium text-sm">{st.name}</p>
                     {st.description && <p className="text-xs text-muted-foreground">{st.description}</p>}
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm">Método de pago</Label>
+          {!Array.isArray(paymentMethods) || paymentMethods.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Cargando métodos de pago…</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {Array.isArray(paymentMethods) && paymentMethods.map((pm) => (
+                <label key={pm.id} className={`flex items-center gap-2 p-3 rounded border cursor-pointer ${selectedPaymentMethodId === pm.id ? 'border-primary' : ''}`}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    checked={selectedPaymentMethodId === pm.id}
+                    onChange={() => setSelectedPaymentMethodId(pm.id)}
+                  />
+                  <div>
+                    <p className="font-medium text-sm">{pm.name}</p>
+                    {pm.description && <p className="text-xs text-muted-foreground">{pm.description}</p>}
                   </div>
                 </label>
               ))}
