@@ -19,6 +19,7 @@ import { useEffect, useState } from "react";
 import { getDashboardMetrics } from "@/services/dashboardApi";
 import { TIER_CONFIG, CustomerTier } from "@/types/loyalty";
 import { fetchMyLoyaltyPoints, fetchMyPointsExpiring, PointsExpiringItem } from "@/services/loyaltyApi";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Component for status cards with consistent styling
 const StatusCard = ({ icon, title, value, subtitle, gradient, delay = 0 }: StatusCardProps) => (
@@ -96,6 +97,7 @@ const LoyaltyTierDisplay = () => {
 
 // Enhanced points display with expiration alerts
 const EnhancedPointsDisplay = () => {
+  const { user } = useAuth();
   const [availablePoints, setAvailablePoints] = useState<number>(0);
   const [expiring, setExpiring] = useState<PointsExpiringItem[]>([]);
 
@@ -103,13 +105,13 @@ const EnhancedPointsDisplay = () => {
     let cancelled = false;
     (async () => {
       try {
-        const { points } = await fetchMyLoyaltyPoints();
+        const { points } = await fetchMyLoyaltyPoints(String(user?.providerClientPk || user?.id || ''));
         if (!cancelled) setAvailablePoints(points ?? 0);
       } catch {
         if (!cancelled) setAvailablePoints(0);
       }
       try {
-        const { expirations } = await fetchMyPointsExpiring(6);
+        const { expirations } = await fetchMyPointsExpiring(6, String(user?.providerClientPk || user?.id || ''));
         if (!cancelled) {
           setExpiring(expirations || []);
           try { localStorage.setItem('loyalty-expiring-next', JSON.stringify(expirations?.[0] || { month: '', expires: 0 })); } catch {}

@@ -8,10 +8,8 @@ export class LoyaltyController {
   // Returns total available points for the current user
   @Get('points')
   @HttpCode(HttpStatus.OK)
-  async getMyPoints(@Headers('authorization') authorization?: string) {
-    // For now, derive a deterministic customer id from the auth header
-    // In the future, this should come from the authenticated user context
-    const customerId = authorization ? authorization.slice(-16) : 'anonymous';
+  async getMyPoints(@Headers('authorization') authorization?: string, @Query('client') client?: string) {
+    const customerId = client || (authorization ? authorization.slice(-16) : 'anonymous');
     const points = await this.loyalty.getPoints(customerId);
     return { points };
   }
@@ -22,8 +20,9 @@ export class LoyaltyController {
   async getMyPointsExpiring(
     @Headers('authorization') authorization?: string,
     @Query('months') months?: string,
+    @Query('client') client?: string,
   ) {
-    const customerId = authorization ? authorization.slice(-16) : 'anonymous';
+    const customerId = client || (authorization ? authorization.slice(-16) : 'anonymous');
     const monthsAhead = Math.max(1, Math.min(24, Number(months || 6)));
     const expirations = await this.loyalty.getUpcomingExpirations(customerId, monthsAhead);
     return { months: monthsAhead, expirations };

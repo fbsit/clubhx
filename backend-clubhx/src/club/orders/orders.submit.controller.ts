@@ -1,6 +1,7 @@
 import { Body, Controller, Post, Res, Headers, BadRequestException } from '@nestjs/common';
 import { Response } from 'express';
 import { ClubApiService } from '../shared/club-api.service';
+import { LoyaltyModuleService } from '../loyalty/loyalty.service';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -32,7 +33,7 @@ function normalizeAliasToUuid(value: unknown, envPrefix: string): string | null 
 
 @Controller()
 export class OrdersSubmitController {
-  constructor(private readonly api: ClubApiService) {}
+  constructor(private readonly api: ClubApiService, private readonly loyalty: LoyaltyModuleService) {}
 
   @Post('/api/v1/order/submit')
   async submit(
@@ -154,6 +155,36 @@ export class OrdersSubmitController {
     const id = idValue != null ? String(idValue) : '';
     const frontendBase = process.env.FRONTEND_BASE_URL ?? 'http://localhost:8080';
     const success_url = `${frontendBase}/main/orders/${encodeURIComponent(id)}`;
+
+    // Award loyalty points based on amount
+    try {
+      // prefer payment_amount if provided; otherwise derive from items and module_items
+      const deriveAmount = (): number => {
+        const pa = normalizeNumberLike(body?.payment_amount);
+        if (pa != null && pa > 0) return pa;
+        const computeLine = (qty: number | null, price: number | null, discPct: number | null): number => {
+          const q = Math.max(0, qty ?? 0);
+          const p = Math.max(0, price ?? 0);
+          const d = Math.min(100, Math.max(0, discPct ?? 0));
+          const subtotal = q * p;
+          return subtotal * (1 - d / 100);
+        };
+        const itemsTotal = items.reduce((sum, it) => sum + computeLine(it.quantity as number, (it as any).price ?? null, (it as any).discount_percentage ?? null), 0);
+        const modulesTotal = module_items.reduce((sum, it) => sum + computeLine(it.quantity as number, (it as any).price ?? null, (it as any).discount_percentage ?? null), 0);
+        const shipping = Math.max(0, normalizeNumberLike(body?.shipping_cost) ?? 0);
+        const globalDisc = Math.max(0, normalizeNumberLike(body?.global_discount) ?? 0);
+        const total = Math.max(0, itemsTotal + modulesTotal + shipping - globalDisc);
+        return total;
+      };
+      const amountCLP = deriveAmount();
+      const customerId = client; // client is required above
+      if (customerId && amountCLP > 0) {
+        await this.loyalty.earnPointsForOrder({ customerId, amountCLP, orderId: id, metadata: { seller, store } });
+      }
+    } catch (e) {
+      // swallow loyalty awarding errors to not break order flow
+      console.error('loyalty award failed:', e);
+    }
 
     return res.status(200).send({ id, success_url, ok: true });
   }

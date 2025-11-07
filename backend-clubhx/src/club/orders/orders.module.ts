@@ -5,9 +5,10 @@ import { OrdersSubmitController } from './orders.submit.controller';
 import { ShippingTypesController } from './shipping-types.controller';
 import { PaymentMethodsController } from './payment-methods.controller';
 import { ClubSharedModule } from '../shared/club-shared.module';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
 
 @Module({
-  imports: [ClubSharedModule],
+  imports: [ClubSharedModule, LoyaltyModule],
   controllers: [
     OrdersController,
     OrdersCreateController,

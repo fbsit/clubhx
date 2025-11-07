@@ -1,10 +1,13 @@
 import { fetchJson } from "@/lib/api";
 
-export async function fetchMyLoyaltyPoints(): Promise<{ points: number }> {
-	return fetchJson<{ points: number }>("/api/v1/loyalty/points");
+export async function fetchMyLoyaltyPoints(clientId?: string): Promise<{ points: number }> {
+    const url = clientId ? `/api/v1/loyalty/points?client=${encodeURIComponent(clientId)}` : `/api/v1/loyalty/points`;
+    return fetchJson<{ points: number }>(url);
 }
 
 export interface PointsExpiringItem { month: string; expires: number }
-export async function fetchMyPointsExpiring(months = 6): Promise<{ months: number; expirations: PointsExpiringItem[] }> {
-  return fetchJson<{ months: number; expirations: PointsExpiringItem[] }>(`/api/v1/loyalty/points-expiring?months=${months}`);
+export async function fetchMyPointsExpiring(months = 6, clientId?: string): Promise<{ months: number; expirations: PointsExpiringItem[] }> {
+  const base = `/api/v1/loyalty/points-expiring?months=${months}`;
+  const url = clientId ? `${base}&client=${encodeURIComponent(clientId)}` : base;
+  return fetchJson<{ months: number; expirations: PointsExpiringItem[] }>(url);
 }

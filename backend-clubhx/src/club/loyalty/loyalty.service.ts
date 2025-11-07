@@ -156,23 +156,51 @@ export class LoyaltyModuleService {
     }
   
     async calculatePointsFromAmount(amount: number): Promise<number> {
-      // Convert amount to points using a standard conversion rate
-      // For example, $1 = 1 point
+      // Conversion: 1 point = 1,000 CLP in purchases
       // Round down to nearest whole point
-      const points = Math.floor(amount);
-  
+      const points = Math.floor((amount || 0) / 1000);
+
       if (points < 0) {
-        // MedusaError.Types.INVALID_DATA -> BadRequestException
         throw new BadRequestException("Amount cannot be negative");
       }
-  
+
       return points;
     }
   
     async calculateCurrencyFromPoints(points: number): Promise<number> {
       // Convert points back to currency
-      const POINTS_TO_CURRENCY_RATE = 1; // 1 point = $1
-      return points * POINTS_TO_CURRENCY_RATE;
+      const CLP_PER_POINT = 1000; // 1 point = 1,000 CLP
+      return points * CLP_PER_POINT;
+    }
+
+    async earnPointsForOrder(params: { customerId: string; amountCLP: number; orderId?: string; metadata?: any }): Promise<{ awarded: number }> {
+      const { customerId, amountCLP, orderId, metadata } = params;
+      const toAward = await this.calculatePointsFromAmount(amountCLP);
+      if (toAward <= 0) return { awarded: 0 };
+
+      return await this.dataSource.transaction(async (manager) => {
+        const lpRepo = manager.getRepository(LoyaltyPoint);
+        const txRepo = manager.getRepository(LoyaltyTransaction);
+
+        let lp = await lpRepo.findOne({ where: { customer_id: customerId }, lock: { mode: 'pessimistic_write' } });
+        if (lp) {
+          lp.points = (lp.points ?? 0) + toAward;
+          await lpRepo.save(lp);
+        } else {
+          lp = lpRepo.create({ customer_id: customerId, points: toAward });
+          await lpRepo.save(lp);
+        }
+
+        const tx = txRepo.create({
+          customer_id: customerId,
+          points_delta: toAward,
+          ...(orderId ? { order_id: orderId } : {}),
+          metadata: { reason: 'order_earned', amountCLP, ...(metadata || {}) },
+        });
+        await txRepo.save(tx);
+
+        return { awarded: toAward };
+      });
     }
   
     // === Integración con Cart/Promotions (requiere entidades adicionales) ===

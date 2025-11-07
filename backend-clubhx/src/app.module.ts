@@ -13,7 +13,7 @@ import { ClubModule } from './club/club.module';
         const databaseUrl = config.get<string>('DATABASE_URL');
         const synchronize = config.get<string>('DB_SYNCHRONIZE', 'true') === 'true';
         const ssl = config.get<string>('DB_SSL', 'false') === 'true';
-
+ 
         if (databaseUrl) {
           return {
             type: 'postgres',
@@ -29,15 +29,15 @@ import { ClubModule } from './club/club.module';
           config.get<string>('PGPORT') ?? config.get<string>('DB_PORT', '5432'),
           10,
         );
-        const username = config.get<string>('PGUSER') ?? config.get<string>('DB_USER', 'root');
-        const password = config.get<string>('PGPASSWORD') ?? config.get<string>('DB_PASSWORD', 'password');
+        const username = config.get<string>('PGUSER') ?? config.get<string>('DB_USER', 'directus');
+        const password = config.get<string>('PGPASSWORD') ?? config.get<string>('DB_PASSWORD', 'directus');
         const database = config.get<string>('PGDATABASE') ?? config.get<string>('DB_NAME', 'clubhx'); 
 
-        return {
+        return { 
           type: 'postgres',
           host,
           port,
-          username,
+          username, 
           password,
           database,
           autoLoadEntities: true,

@@ -30,7 +30,7 @@ export default function Loyalty() {
     let cancelled = false;
     (async () => {
       try {
-        const { points } = await fetchMyLoyaltyPoints();
+        const { points } = await fetchMyLoyaltyPoints(String(user?.providerClientPk || user?.id || ''));
         if (!cancelled) setTotalPoints(points ?? 0);
       } catch {
         if (!cancelled) setTotalPoints(0);
