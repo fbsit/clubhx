@@ -40,18 +40,34 @@ export function adaptEventFromDto(dto: EventDto): Event {
 }
 
 // Convertir de Event (frontend) a CreateEventDto (backend)
+function toOffsetIso(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  const mm = pad(date.getMonth() + 1);
+  const dd = pad(date.getDate());
+  const HH = pad(date.getHours());
+  const MM = pad(date.getMinutes());
+  const SS = pad(date.getSeconds());
+  const ms = String(date.getMilliseconds()).padStart(3, '0');
+  const tz = date.getTimezoneOffset(); // minutes; positive if local is behind UTC
+  const sign = tz > 0 ? '-' : '+';
+  const oh = pad(Math.floor(Math.abs(tz) / 60));
+  const om = pad(Math.abs(tz) % 60);
+  return `${yyyy}-${mm}-${dd}T${HH}:${MM}:${SS}.${ms}${sign}${oh}:${om}`;
+}
+
 export function adaptEventToCreateDto(event: Event): CreateEventDto {
   const [startTime, endTime] = event.time.split(' - ');
-  const startDate = new Date(`${event.date}T${startTime}`);
-  const endDate = new Date(`${event.date}T${endTime}`);
-  
+  const startLocal = new Date(`${event.date}T${startTime}`);
+  const endLocal = new Date(`${event.date}T${endTime}`);
+
   return {
     title: event.title,
     description: event.description,
     category: event.brand,
     status: 'active',
-    start_date: startDate,
-    end_date: endDate,
+    start_date: toOffsetIso(startLocal),
+    end_date: toOffsetIso(endLocal),
     location: event.eventType === 'presencial' ? event.location : undefined,
     address: event.address?.street,
     price: event.pointsCost > 0 ? event.pointsCost : undefined,
@@ -69,15 +85,15 @@ export function adaptEventToCreateDto(event: Event): CreateEventDto {
 // Convertir de Event (frontend) a UpdateEventDto (backend)
 export function adaptEventToUpdateDto(event: Event): UpdateEventDto {
   const [startTime, endTime] = event.time.split(' - ');
-  const startDate = new Date(`${event.date}T${startTime}`);
-  const endDate = new Date(`${event.date}T${endTime}`);
+  const startLocal = new Date(`${event.date}T${startTime}`);
+  const endLocal = new Date(`${event.date}T${endTime}`);
   
   return {
     title: event.title,
     description: event.description,
     category: event.brand,
-    start_date: startDate,
-    end_date: endDate,
+    start_date: toOffsetIso(startLocal),
+    end_date: toOffsetIso(endLocal),
     location: event.eventType === 'presencial' ? event.location : undefined,
     address: event.address?.street,
     price: event.pointsCost > 0 ? event.pointsCost : undefined,
