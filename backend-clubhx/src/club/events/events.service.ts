@@ -243,7 +243,10 @@ export class EventsService {
     if (!authorization) {
       throw new BadRequestException('Missing Authorization header');
     }
-    return createHash('sha256').update(authorization).digest('hex');
+    // Normalize to hash only the token, ignoring auth scheme differences
+    const m = authorization.match(/^(Bearer|ClientToken)\s+(.+)$/i);
+    const token = m ? m[2].trim() : authorization.trim();
+    return createHash('sha256').update(token).digest('hex');
   }
 
   async createRegistration(

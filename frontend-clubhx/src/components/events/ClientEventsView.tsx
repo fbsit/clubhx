@@ -15,12 +15,13 @@ import { fetchMyLoyaltyPoints } from "@/services/loyaltyApi";
 
 export default function ClientEventsView() {
   const { events: eventDtos, loading, error } = usePublicEvents(20);
-  const { registerForEvent, cancelRegistration, registrations } = useEventRegistrations();
+  const { registerForEvent, registrations, refreshRegistrations, cancelRegistration } = useEventRegistrations();
   const events = adaptEventsFromDto(eventDtos);
   const [userPoints, setUserPoints] = useState<number>(0);
   
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [registrationDialogOpen, setRegistrationDialogOpen] = useState(false);
+  const [tabValue, setTabValue] = useState<"upcoming" | "past" | "my">("upcoming");
 
   useEffect(() => {
     let cancelled = false;
@@ -43,13 +44,16 @@ export default function ClientEventsView() {
   const handleRegister = async (_eventId: string, _attendeesCount: number = 1) => {
     // La inscripción real se ejecuta en EventRegistrationDialog vía registerForEvent
     setRegistrationDialogOpen(false);
+    // Refrescar inscripciones para que el badge y la pestaña "Mis eventos" se actualicen
+    await refreshRegistrations();
   };
 
   return (
-    <Tabs defaultValue="upcoming" className="w-full">
-      <TabsList className="w-full grid grid-cols-2 h-auto mb-4">
+    <Tabs defaultValue="upcoming" value={tabValue} onValueChange={(v) => setTabValue(v as any)} className="w-full">
+      <TabsList className="w-full grid grid-cols-3 h-auto mb-4">
         <TabsTrigger value="upcoming" className="py-2">Próximos</TabsTrigger>
         <TabsTrigger value="past" className="py-2">Pasados</TabsTrigger>
+        <TabsTrigger value="my" className="py-2">Mis eventos</TabsTrigger>
       </TabsList>
       
       <TabsContent value="upcoming" className="mt-0">
@@ -162,6 +166,61 @@ export default function ClientEventsView() {
                     Inscribirme
                   </Button>
                 )}
+              </CardFooter>
+            </Card>
+          );})}
+        </div>
+        )}
+      </TabsContent>
+
+      {/* Mis eventos (inscrito) */}
+      <TabsContent value="my" className="mt-0">
+        {events.filter(event => registrations.some(r => r.eventId === event.id)).length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">No estás inscrito en eventos</h3>
+              <p className="text-muted-foreground">Inscríbete en un evento para verlo aquí.</p>
+            </CardContent>
+          </Card>
+        ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {events.filter(event => registrations.some(r => r.eventId === event.id)).map(event => {
+            const myReg = registrations.find(r => r.eventId === event.id);
+            const attendees = myReg?.attendeesCount || 0;
+            return (
+            <Card key={event.id} className="overflow-hidden flex flex-col">
+              <div className="aspect-video relative overflow-hidden">
+                <img 
+                  src={event.image} 
+                  alt={event.title} 
+                  className="object-cover w-full h-full"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80";
+                  }}
+                />
+                <Badge 
+                  className="absolute top-3 right-3 bg-primary/90 hover:bg-primary"
+                >
+                  {event.brand}
+                </Badge>
+              </div>
+              
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg leading-tight">{event.title}</CardTitle>
+                <CardDescription className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3 inline" />
+                  {event.date}
+                  <span className="mx-1">•</span>
+                  <Clock className="h-3 w-3 inline" />
+                  {event.time}
+                </CardDescription>
+              </CardHeader>
+              
+              <CardFooter className="pt-2 border-t flex-shrink-0 flex flex-col items-center gap-2">
+                <Badge variant="outline" className="border-green-500 text-green-500">
+                  Inscrito {attendees > 1 ? `(${attendees} personas)` : ''}
+                </Badge>
               </CardFooter>
             </Card>
           );})}
