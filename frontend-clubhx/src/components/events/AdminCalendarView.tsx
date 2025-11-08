@@ -51,9 +51,14 @@ export default function AdminCalendarView({ events, onAddEvent, onEditEvent, onD
   } = useEventsFilter(events);
 
   // Convertir eventos filtrados a fechas para comparación
+  const parseLocalDate = (s: string) => {
+    const [y, m, d] = s.split('-').map((v) => parseInt(v, 10));
+    return new Date(y, (m || 1) - 1, d || 1);
+  };
+
   const eventsWithDates = filteredEvents.map(event => ({
     ...event,
-    dateObj: new Date(event.date)
+    dateObj: parseLocalDate(event.date)
   }));
 
   const getEventsForDay = (day: Date) => {

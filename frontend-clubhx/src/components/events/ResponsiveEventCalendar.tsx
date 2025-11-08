@@ -34,9 +34,14 @@ export function ResponsiveEventCalendar({
   const monthEnd = endOfMonth(currentDate);
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
+  const parseLocalDate = (s: string) => {
+    const [y, m, d] = s.split('-').map((v) => parseInt(v, 10));
+    return new Date(y, (m || 1) - 1, d || 1);
+  };
+
   const eventsWithDates = events.map(event => ({
     ...event,
-    dateObj: new Date(event.date)
+    dateObj: parseLocalDate(event.date)
   }));
 
   const getEventsForDay = (day: Date) => {

@@ -10,6 +10,9 @@ import {
   Query,
   UseGuards,
   Request,
+  Headers,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { CreateEventDto, EventStatus } from './dto/create-event.dto';
@@ -95,13 +98,29 @@ export class EventsController {
   }
 
   @Post(':id/register')
-  async registerForEvent(@Param('id') id: string): Promise<void> {
-    return this.eventsService.incrementRegistrations(id);
+  @HttpCode(HttpStatus.OK)
+  async registerForEvent(
+    @Param('id') id: string,
+    @Headers('authorization') authorization?: string,
+    @Body() body?: { attendeesCount?: number; notes?: string; userId?: string; userEmail?: string },
+  ): Promise<any> {
+    const registration = await this.eventsService.createRegistration(id, authorization ?? '', {
+      attendeesCount: body?.attendeesCount,
+      notes: body?.notes,
+      userId: body?.userId,
+      userEmail: body?.userEmail,
+    });
+    return registration;
   }
 
   @Post(':id/unregister')
-  async unregisterFromEvent(@Param('id') id: string): Promise<void> {
-    return this.eventsService.decrementRegistrations(id);
+  @HttpCode(HttpStatus.OK)
+  async unregisterFromEvent(
+    @Param('id') id: string,
+    @Headers('authorization') authorization?: string,
+  ): Promise<{ success: boolean }> {
+    await this.eventsService.cancelRegistrationByAuthorization(id, authorization ?? '');
+    return { success: true };
   }
 
   @Patch(':id/toggle-featured')
