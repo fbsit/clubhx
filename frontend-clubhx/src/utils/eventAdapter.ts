@@ -6,12 +6,14 @@ export function adaptEventFromDto(dto: EventDto): Event {
   const startDate = new Date(dto.start_date);
   const endDate = new Date(dto.end_date);
   const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const localDateStr = `${startDate.getFullYear()}-${pad(startDate.getMonth() + 1)}-${pad(startDate.getDate())}`;
   
   return {
     id: dto.id,
     title: dto.title,
     brand: dto.category || 'General',
-    date: startDate.toISOString().split('T')[0], // YYYY-MM-DD format
+    date: localDateStr, // YYYY-MM-DD in local time
     time: `${startDate.toLocaleTimeString('es-CL', { 
       hour: '2-digit', 
       minute: '2-digit' 
