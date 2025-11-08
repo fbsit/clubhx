@@ -105,13 +105,13 @@ const EnhancedPointsDisplay = () => {
     let cancelled = false;
     (async () => {
       try {
-        const { points } = await fetchMyLoyaltyPoints(String(user?.providerClientPk || user?.id || ''));
+        const { points } = await fetchMyLoyaltyPoints(String(user?.id || user?.providerClientPk || ''));
         if (!cancelled) setAvailablePoints(points ?? 0);
       } catch {
         if (!cancelled) setAvailablePoints(0);
       }
       try {
-        const { expirations } = await fetchMyPointsExpiring(6, String(user?.providerClientPk || user?.id || ''));
+        const { expirations } = await fetchMyPointsExpiring(6, String(user?.id || user?.providerClientPk || ''));
         if (!cancelled) {
           setExpiring(expirations || []);
           try { localStorage.setItem('loyalty-expiring-next', JSON.stringify(expirations?.[0] || { month: '', expires: 0 })); } catch {}

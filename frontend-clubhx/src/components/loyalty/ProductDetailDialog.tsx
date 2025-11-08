@@ -6,24 +6,42 @@ import { Calendar, Clock } from "lucide-react";
 import OptimizedImage from "@/components/ui/optimized-image";
 
 interface ProductDetailDialogProps {
+  // Nuevo contrato (usado por ClientLoyaltyView)
   isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
-  selectedProduct: any;
-  totalPoints: number;
-  onConfirmRedeem: () => void;
+  onClose?: () => void;
+  product?: any;
+  userPoints?: number;
+  onRedeem?: () => void;
+  // Contrato anterior (compat)
+  setIsOpen?: (open: boolean) => void;
+  selectedProduct?: any;
+  totalPoints?: number;
+  onConfirmRedeem?: () => void;
 }
 
-export const ProductDetailDialog: React.FC<ProductDetailDialogProps> = ({
-  isOpen,
-  setIsOpen,
-  selectedProduct,
-  totalPoints,
-  onConfirmRedeem
-}) => {
-  if (!selectedProduct) return null;
+export const ProductDetailDialog: React.FC<ProductDetailDialogProps> = (props) => {
+  const {
+    isOpen,
+    onClose,
+    product,
+    userPoints,
+    onRedeem,
+    setIsOpen,
+    selectedProduct,
+    totalPoints,
+    onConfirmRedeem,
+  } = props;
+
+  // Normaliza nombres de props para soportar ambos contratos
+  const item = product ?? selectedProduct;
+  const points = typeof userPoints === "number" ? userPoints : (totalPoints ?? 0);
+  const close = onClose ?? (setIsOpen ? () => setIsOpen(false) : undefined);
+  const confirm = onRedeem ?? onConfirmRedeem;
+
+  if (!item) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => (setIsOpen ? setIsOpen(open) : onClose && !open ? onClose() : undefined)}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Detalle del Producto</DialogTitle>
@@ -35,56 +53,56 @@ export const ProductDetailDialog: React.FC<ProductDetailDialogProps> = ({
         <div className="space-y-4 py-4">
           <div className="aspect-video relative overflow-hidden shadow-sm">
             <OptimizedImage
-              src={selectedProduct.image} 
-              alt={selectedProduct.title}
+              src={item.image} 
+              alt={item.title}
               className="w-full h-full"
             />
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold">{selectedProduct.title}</h3>
-            <p className="text-muted-foreground mt-1">{selectedProduct.description}</p>
+            <h3 className="text-lg font-semibold">{item.title}</h3>
+            <p className="text-muted-foreground mt-1">{item.description}</p>
           </div>
           
           <div className="flex justify-between items-center border-t pt-4">
             <div>
               <p className="text-sm text-muted-foreground">Puntos necesarios</p>
-              <p className="text-xl font-bold">{selectedProduct.pointsCost.toLocaleString()}</p>
+              <p className="text-xl font-bold">{item.pointsCost.toLocaleString()}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Tus puntos</p>
-              <p className="text-xl font-bold">{totalPoints.toLocaleString()}</p>
+              <p className="text-xl font-bold">{points.toLocaleString()}</p>
             </div>
           </div>
           
-          {selectedProduct.date && (
+          {item.date && (
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span>{selectedProduct.date}</span>
+              <span>{item.date}</span>
             </div>
           )}
           
-          {selectedProduct.location && (
+          {item.location && (
             <div className="flex items-center gap-2 text-sm">
               <Clock className="h-4 w-4 text-muted-foreground" />
-              <span>{selectedProduct.location}</span>
+              <span>{item.location}</span>
             </div>
           )}
           
-          {selectedProduct.available && (
+          {item.available && (
             <div className="text-sm text-muted-foreground">
-              Solo quedan {selectedProduct.available} disponibles
+              Solo quedan {item.available} disponibles
             </div>
           )}
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>Cancelar</Button>
+          <Button variant="outline" onClick={close}>Cancelar</Button>
           <Button 
-            onClick={onConfirmRedeem}
-            disabled={totalPoints < selectedProduct.pointsCost}
+            onClick={confirm}
+            disabled={points < item.pointsCost}
           >
-            Canjear {selectedProduct.pointsCost.toLocaleString()} puntos
+            Canjear {item.pointsCost.toLocaleString()} puntos
           </Button>
         </DialogFooter>
       </DialogContent>

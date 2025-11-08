@@ -248,8 +248,11 @@ export class LoyaltyRewardsApiService {
 
 export const loyaltyRewardsApi = new LoyaltyRewardsApiService();
 
-export async function redeemLoyaltyReward(id: string): Promise<{ success: boolean; points?: number }> {
-	return fetchJson<{ success: boolean; points?: number }>(`/api/v1/loyalty-rewards/${id}/redeem`, { method: "POST" });
+export async function redeemLoyaltyReward(id: string, clientId?: string): Promise<{ success: boolean; points?: number }> {
+  const url = clientId
+    ? `/api/v1/loyalty-rewards/${id}/redeem?client=${encodeURIComponent(clientId)}`
+    : `/api/v1/loyalty-rewards/${id}/redeem`;
+	return fetchJson<{ success: boolean; points?: number }>(url, { method: "POST" });
 }
 
 export async function getMyRedemptions(status?: 'pending' | 'delivered') {

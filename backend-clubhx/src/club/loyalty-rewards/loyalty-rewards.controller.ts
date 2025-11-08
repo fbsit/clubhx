@@ -111,9 +111,15 @@ export class LoyaltyRewardsController {
   }
 
   @Post(':id/redeem')
-  async redeemReward(@Param('id') id: string, @Headers('authorization') authorization?: string): Promise<{ success: boolean; points: number }> {
-    // Resolve customer identity from auth header (placeholder)
-    const customerId = authorization ? authorization.slice(-16) : 'anonymous';
+  async redeemReward(
+    @Param('id') id: string,
+    @Headers('authorization') authorization?: string,
+    @Query('client') client?: string,
+  ): Promise<{ success: boolean; points: number }> {
+    // Resolve customer identity: prefer explicit client query, fallback to auth-derived placeholder
+    const customerId = client && String(client).trim().length > 0
+      ? String(client).trim()
+      : (authorization ? authorization.slice(-16) : 'anonymous');
     const reward = await this.loyaltyRewardsService.findOne(id);
     // Check stock and increment
     await this.loyaltyRewardsService.incrementRedemptions(id);

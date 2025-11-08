@@ -173,6 +173,40 @@ export class LoyaltyModuleService {
       return points * CLP_PER_POINT;
     }
 
+    /**
+     * Earn points with an explicit points value (already calculated by caller).
+     * Creates a loyalty transaction and updates the customer's balance atomically.
+     */
+    async earnPointsForOrderExplicit(params: { customerId: string; points: number; orderId?: string; metadata?: any }): Promise<{ awarded: number }> {
+      const { customerId, points, orderId, metadata } = params;
+      const toAward = Math.floor(points || 0);
+      if (toAward <= 0) return { awarded: 0 };
+
+      return await this.dataSource.transaction(async (manager) => {
+        const lpRepo = manager.getRepository(LoyaltyPoint);
+        const txRepo = manager.getRepository(LoyaltyTransaction);
+
+        let lp = await lpRepo.findOne({ where: { customer_id: customerId }, lock: { mode: 'pessimistic_write' } });
+        if (lp) {
+          lp.points = (lp.points ?? 0) + toAward;
+          await lpRepo.save(lp);
+        } else {
+          lp = lpRepo.create({ customer_id: customerId, points: toAward });
+          await lpRepo.save(lp);
+        }
+
+        const tx = txRepo.create({
+          customer_id: customerId,
+          points_delta: toAward,
+          ...(orderId ? { order_id: orderId } : {}),
+          metadata: { reason: 'order_earned', ...(metadata || {}) },
+        });
+        await txRepo.save(tx);
+
+        return { awarded: toAward };
+      });
+    }
+
     async earnPointsForOrder(params: { customerId: string; amountCLP: number; orderId?: string; metadata?: any }): Promise<{ awarded: number }> {
       const { customerId, amountCLP, orderId, metadata } = params;
       const toAward = await this.calculatePointsFromAmount(amountCLP);

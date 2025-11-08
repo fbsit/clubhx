@@ -41,8 +41,14 @@ export function useEventRegistrations(): UseEventRegistrationsReturn {
       
       const registration = await eventRegistrationApi.registerForEvent(eventId, data);
       
-      // Agregar la nueva inscripción a la lista
-      setRegistrations(prev => [registration, ...prev]);
+      // Refrescar desde el servidor para mantener consistencia
+      try {
+        const response = await eventRegistrationApi.getUserRegistrations();
+        setRegistrations(response.results);
+      } catch {
+        // fallback en caso de error de refresco
+        setRegistrations(prev => [registration, ...prev]);
+      }
       
       toast.success('Inscripción exitosa');
       return registration;

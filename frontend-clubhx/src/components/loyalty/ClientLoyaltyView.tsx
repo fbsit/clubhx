@@ -7,6 +7,7 @@ import ConfirmationDialog from "@/components/loyalty/ConfirmationDialog";
 import { usePublicLoyaltyRewards } from "@/hooks/useLoyaltyRewards";
 import { LoyaltyProduct } from "@/utils/loyaltyRewardAdapter";
 import { redeemLoyaltyReward } from "@/services/loyaltyRewardsApi";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 interface ClientLoyaltyViewProps {
@@ -18,6 +19,7 @@ export const ClientLoyaltyView: React.FC<ClientLoyaltyViewProps> = ({
   totalPoints, 
   isMobile 
 }) => {
+  const { user } = useAuth();
   const [selectedProduct, setSelectedProduct] = useState<LoyaltyProduct | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -64,7 +66,8 @@ export const ClientLoyaltyView: React.FC<ClientLoyaltyViewProps> = ({
       if (!selectedProduct) return;
       setIsDialogOpen(false);
       setConfirmDialogOpen(false);
-      const res = await redeemLoyaltyReward(selectedProduct.id);
+      const clientId = String(user?.id || user?.providerClientPk || '');
+      const res = await redeemLoyaltyReward(selectedProduct.id, clientId || undefined);
       if (res.success) {
         toast.success("Canje realizado correctamente");
         setRedeemSuccess(true);

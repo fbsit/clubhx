@@ -15,7 +15,7 @@ import { fetchMyLoyaltyPoints } from "@/services/loyaltyApi";
 
 export default function ClientEventsView() {
   const { events: eventDtos, loading, error } = usePublicEvents(20);
-  const { registerForEvent, registrations } = useEventRegistrations();
+  const { registerForEvent, cancelRegistration, registrations } = useEventRegistrations();
   const events = adaptEventsFromDto(eventDtos);
   const [userPoints, setUserPoints] = useState<number>(0);
   
@@ -136,9 +136,22 @@ export default function ClientEventsView() {
                 )}
                 
                 {isRegistered ? (
-                  <Badge variant="outline" className="border-green-500 text-green-500">
-                    Inscrito {attendees > 1 ? `(${attendees} personas)` : ''}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="border-green-500 text-green-500">
+                      Inscrito {attendees > 1 ? `(${attendees} personas)` : ''}
+                    </Badge>
+                    {/* Opción para cancelar inscripción */}
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={async () => {
+                        if (!myReg) return;
+                        await cancelRegistration(event.id, myReg.id);
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
                 ) : (
                   <Button 
                     size="sm" 
