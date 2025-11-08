@@ -18,6 +18,7 @@ interface EventFormDialogProps {
 }
 
 export function EventFormDialog({ open, setOpen, event, isNew, onSave }: EventFormDialogProps) {
+  const [form, setForm] = useState<Event>(event);
   const [eventType, setEventType] = useState<"online" | "presencial">(event.eventType || "presencial");
   const [selectedColor, setSelectedColor] = useState(event.color || "#3b82f6");
   const [isSaving, setIsSaving] = useState(false);
@@ -32,7 +33,7 @@ export function EventFormDialog({ open, setOpen, event, isNew, onSave }: EventFo
     try {
       setIsSaving(true);
       const updatedEvent = {
-        ...event,
+        ...form,
         eventType,
         color: selectedColor,
       };
@@ -56,11 +57,16 @@ export function EventFormDialog({ open, setOpen, event, isNew, onSave }: EventFo
         
         <div className="grid gap-6 py-4">
           <EventBasicInfoForm
-            title={event.title}
-            brand={event.brand}
-            description={event.description}
-            date={event.date}
-            time={event.time}
+            title={form.title}
+            brand={form.brand}
+            description={form.description}
+            date={form.date}
+            time={form.time}
+            onTitleChange={(v) => setForm(prev => ({ ...prev, title: v }))}
+            onBrandChange={(v) => setForm(prev => ({ ...prev, brand: v }))}
+            onDescriptionChange={(v) => setForm(prev => ({ ...prev, description: v }))}
+            onDateChange={(v) => setForm(prev => ({ ...prev, date: v }))}
+            onTimeChange={(v) => setForm(prev => ({ ...prev, time: v }))}
           />
 
           <EventTypeSelector
@@ -70,9 +76,9 @@ export function EventFormDialog({ open, setOpen, event, isNew, onSave }: EventFo
 
           <EventLocationForm
             eventType={eventType}
-            location={event.location}
-            address={event.address}
-            onlineUrl={event.onlineUrl}
+            location={form.location}
+            address={form.address}
+            onlineUrl={form.onlineUrl}
           />
 
           <EventColorSelector
@@ -81,10 +87,10 @@ export function EventFormDialog({ open, setOpen, event, isNew, onSave }: EventFo
           />
           
           <EventConfigurationForm
-            spots={event.spots}
-            pointsCost={event.pointsCost}
-            image={event.image}
-            isPast={event.isPast}
+            spots={form.spots}
+            pointsCost={form.pointsCost}
+            image={form.image}
+            isPast={form.isPast}
             isNew={isNew}
             onImageSelected={handleImageSelected}
           />

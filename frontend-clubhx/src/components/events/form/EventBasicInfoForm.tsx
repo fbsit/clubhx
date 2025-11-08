@@ -9,9 +9,14 @@ interface EventBasicInfoFormProps {
   description: string;
   date: string;
   time: string;
+  onTitleChange?: (value: string) => void;
+  onBrandChange?: (value: string) => void;
+  onDescriptionChange?: (value: string) => void;
+  onDateChange?: (value: string) => void;
+  onTimeChange?: (value: string) => void;
 }
 
-export default function EventBasicInfoForm({ title, brand, description, date, time }: EventBasicInfoFormProps) {
+export default function EventBasicInfoForm({ title, brand, description, date, time, onTitleChange, onBrandChange, onDescriptionChange, onDateChange, onTimeChange }: EventBasicInfoFormProps) {
   return (
     <>
       <div className="grid grid-cols-2 gap-4">
@@ -19,7 +24,8 @@ export default function EventBasicInfoForm({ title, brand, description, date, ti
           <Label htmlFor="title">Título del Evento</Label>
           <Input 
             id="title" 
-            defaultValue={title}
+            value={title}
+            onChange={(e) => onTitleChange?.(e.target.value)}
           />
         </div>
         
@@ -27,7 +33,8 @@ export default function EventBasicInfoForm({ title, brand, description, date, ti
           <Label htmlFor="brand">Marca</Label>
           <Input 
             id="brand" 
-            defaultValue={brand}
+            value={brand}
+            onChange={(e) => onBrandChange?.(e.target.value)}
           />
         </div>
       </div>
@@ -37,7 +44,8 @@ export default function EventBasicInfoForm({ title, brand, description, date, ti
         <Textarea 
           id="description" 
           rows={3}
-          defaultValue={description}
+          value={description}
+          onChange={(e) => onDescriptionChange?.(e.target.value)}
         />
       </div>
       
@@ -47,7 +55,8 @@ export default function EventBasicInfoForm({ title, brand, description, date, ti
           <Input 
             id="date" 
             type="date"
-            defaultValue={date}
+            value={date}
+            onChange={(e) => onDateChange?.(e.target.value)}
           />
         </div>
         
@@ -55,7 +64,8 @@ export default function EventBasicInfoForm({ title, brand, description, date, ti
           <Label htmlFor="time">Horario</Label>
           <Input 
             id="time" 
-            defaultValue={time}
+            value={time}
+            onChange={(e) => onTimeChange?.(e.target.value)}
           />
         </div>
       </div>
