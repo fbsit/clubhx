@@ -285,9 +285,13 @@ export function usePublicLoyaltyRewards(customerPoints: number = 0, limit: numbe
     try {
       setLoading(true);
       setError(null);
-      
-      const publicRewards = await loyaltyRewardsApi.getPublicAvailableRewards(customerPoints, limit);
-      const adaptedRewards = adaptLoyaltyRewardsFromDto(publicRewards);
+      // Mostrar todos los productos públicos activos (independiente de puntos del usuario).
+      const publicList = await loyaltyRewardsApi.getRewards({
+        isPublic: true,
+        status: 'active' as any,
+        limit,
+      });
+      const adaptedRewards = adaptLoyaltyRewardsFromDto(publicList.results);
       setRewards(adaptedRewards);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al cargar productos de lealtad';

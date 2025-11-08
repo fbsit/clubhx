@@ -68,18 +68,29 @@ export class LoyaltyModuleService {
     }
   
     async deductPoints(customerId: string, points: number): Promise<LoyaltyPoint> {
-      const existingPoints = await this.listLoyaltyPoints({
-        customer_id: customerId,
-      });
-  
-      if (existingPoints.length === 0 || (existingPoints[0].points ?? 0) < points) {
-        // MedusaError.Types.NOT_ALLOWED -> ForbiddenException (o BadRequest si prefieres 400)
+      const toSpend = Math.floor(points || 0);
+      const existingPoints = await this.listLoyaltyPoints({ customer_id: customerId });
+      if (toSpend <= 0 || existingPoints.length === 0 || (existingPoints[0].points ?? 0) < toSpend) {
         throw new ForbiddenException("Insufficient loyalty points");
       }
-  
-      return await this.updateLoyaltyPoints({
-        id: existingPoints[0].id,
-        points: (existingPoints[0].points ?? 0) - points,
+
+      return await this.dataSource.transaction(async (manager) => {
+        // Update balance
+        const repo = manager.getRepository(LoyaltyPoint);
+        const lp = await repo.findOneByOrFail({ id: existingPoints[0].id });
+        lp.points = (lp.points ?? 0) - toSpend;
+        await repo.save(lp);
+
+        // Record negative transaction for consistency with expiry logic
+        const txRepo = manager.getRepository(LoyaltyTransaction);
+        const tx = txRepo.create({
+          customer_id: customerId,
+          points_delta: -toSpend,
+          metadata: { reason: 'reward_redeem' },
+        });
+        await txRepo.save(tx);
+
+        return lp;
       });
     }
   
