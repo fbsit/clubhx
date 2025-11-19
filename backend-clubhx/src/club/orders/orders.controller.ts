@@ -34,22 +34,22 @@ export class OrdersController {
         : authorization
       : undefined;
 
-    // Siempre usamos el mismo endpoint upstream `/api/v1/order/`
+    // Siempre usamos el mismo endpoint upstream `/api/v1/order`
     // y dejamos que acepte cualquier query param (incluyendo `client`).
     this.logger.debug(
-      `Calling upstream GET /api/v1/order/ with query=${JSON.stringify(query)} authHeader=${
+      `Calling upstream GET /api/v1/order with query=${JSON.stringify(query)} authHeader=${
         authHeader ? 'custom' : 'default'
       }`,
     );
 
-    const upstream = await this.api.request('get', '/api/v1/order/', {
+    const upstream = await this.api.request('get', '/api/v1/order', {
       query,
       headers: authHeader ? { Authorization: authHeader } : undefined,
       useAuthHeader: authHeader ? false : undefined,
     });
 
     this.logger.debug(
-      `Upstream /api/v1/order/ responded status=${upstream.status} payloadSample=${JSON.stringify(
+      `Upstream /api/v1/order responded status=${upstream.status} payloadSample=${JSON.stringify(
         Array.isArray((upstream as any).data)
           ? (upstream as any).data.slice(0, 1)
           : (upstream as any).data && typeof (upstream as any).data === 'object'
@@ -62,7 +62,7 @@ export class OrdersController {
 
   // Removed /my: use /by-client or /by-seller instead
 
-  // New: list orders by client (provider: /api/v1/order/?client=pk&page=int)
+  // New: list orders by client (provider: /api/v1/order?client=pk&page=int)
   @Get('/by-client')
   @ApiOperation({ summary: 'Listar pedidos por cliente', description: 'Lista pedidos para un cliente específico' })
   async listByClient(
@@ -74,7 +74,7 @@ export class OrdersController {
     const authHeader = authorization
       ? (authorization.startsWith('Bearer ') ? `Token ${authorization.slice(7)}` : authorization)
       : undefined;
-    const upstream = await this.api.request('get', '/api/v1/order/', {
+    const upstream = await this.api.request('get', '/api/v1/order', {
       query: { client, ...(page ? { page } : {}) },
       headers: authHeader ? { Authorization: authHeader } : undefined,
       useAuthHeader: authHeader ? false : undefined,
