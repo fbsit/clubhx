@@ -1,10 +1,7 @@
 // Resolve API base URL from env or runtime
-const runtimeApiBase = (globalThis as any)?.__CLUBHX_API_BASE__ as string | undefined;
-const envApiBase = (import.meta as any)?.env?.VITE_API_BASE as string | undefined;
-const DEFAULT_API_BASE = (import.meta as any)?.env?.PROD
-  ? "https://backend-clubhx-production.up.railway.app"
-  : "http://localhost:3002";
-export const API_BASE: string = (runtimeApiBase || envApiBase || DEFAULT_API_BASE).replace(/\/$/, "");
+
+const DEFAULT_API_BASE = (import.meta as any)?.env?.PROD ?? 'https://backend-clubhx-production.up.railway.app'
+export const API_BASE: string = DEFAULT_API_BASE.replace(/\/$/, "");
 
 type JsonError = { message?: string; error?: string; statusCode?: number } | string | null;
 
