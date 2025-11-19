@@ -24,22 +24,23 @@ export class OrdersController {
     @Res() res: Response,
     @Headers('authorization') authorization?: string,
   ) {
-    this.logger.debug(
-      `Incoming GET /api/v1/order with query=${JSON.stringify(query)} auth=${authorization ? 'yes' : 'no'}`,
-    );
-
     const authHeader = authorization
       ? authorization.startsWith('Bearer ')
         ? `Token ${authorization.slice(7)}`
         : authorization
       : undefined;
 
-    // Siempre usamos el mismo endpoint upstream `/api/v1/order`
-    // y dejamos que acepte cualquier query param (incluyendo `client`).
+    // Construimos la URL final (incluyendo query) para loguear una sola vez
+    const qs = new URLSearchParams();
+    Object.entries(query ?? {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        qs.append(key, String(value));
+      }
+    });
+    const finalUrl = qs.toString() ? `/api/v1/order?${qs.toString()}` : '/api/v1/order';
+
     this.logger.debug(
-      `Calling upstream GET /api/v1/order with query=${JSON.stringify(query)} authHeader=${
-        authHeader ? 'custom' : 'default'
-      }`,
+      `Orders upstream request: GET ${finalUrl} authHeader=${authHeader ? 'custom' : 'default'}`,
     );
 
     const upstream = await this.api.request('get', '/api/v1/order', {
@@ -47,16 +48,6 @@ export class OrdersController {
       headers: authHeader ? { Authorization: authHeader } : undefined,
       useAuthHeader: authHeader ? false : undefined,
     });
-
-    this.logger.debug(
-      `Upstream /api/v1/order responded status=${upstream.status} payloadSample=${JSON.stringify(
-        Array.isArray((upstream as any).data)
-          ? (upstream as any).data.slice(0, 1)
-          : (upstream as any).data && typeof (upstream as any).data === 'object'
-          ? { ...((upstream as any).data as any), results: undefined }
-          : (upstream as any).data,
-      )}`,
-    );
     return res.status(upstream.status).send(upstream.data);
   }
 
