@@ -32,6 +32,7 @@ const initialFormData: RegistrationFormData = {
   contactName: "",
   email: "",
   phone: "",
+  password: "",
   address: "",
   commune: "",
   region: ""
@@ -62,7 +63,7 @@ export default function ClientRegistrationFlow({ onComplete }: { onComplete: () 
       case 1:
         return !!(formData.companyName && formData.rut && formData.businessType);
       case 2:
-        return !!(formData.contactName && formData.email && formData.phone);
+        return !!(formData.contactName && formData.email && formData.phone && formData.password);
       case 3:
         return !!(formData.address && formData.commune && formData.region);
       case 4:
@@ -99,6 +100,7 @@ export default function ClientRegistrationFlow({ onComplete }: { onComplete: () 
         contactName: formData.contactName,
         email: formData.email,
         phone: formData.phone,
+         password: formData.password,
         address: formData.address,
         commune: formData.commune,
         region: formData.region,
