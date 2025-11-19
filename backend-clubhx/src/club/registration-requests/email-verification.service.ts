@@ -20,17 +20,18 @@ export class EmailVerificationService {
   }
 
   async sendCode(email: string): Promise<void> {
+    const normalizedEmail = email.trim().toLowerCase();
     const code = this.generateCode();
     const now = new Date();
     const expiresAt = new Date(now.getTime() + CODE_TTL_SECONDS * 1000);
 
     // Limpiar registros expirados para este email
-    await this.repo.delete({ email, expiresAt: LessThan(now) });
+    await this.repo.delete({ email: normalizedEmail, expiresAt: LessThan(now) });
 
-    let record = await this.repo.findOne({ where: { email } });
+    let record = await this.repo.findOne({ where: { email: normalizedEmail } });
     if (!record) {
       record = this.repo.create({
-        email,
+        email: normalizedEmail,
         code,
         expiresAt,
         attempts: 0,
@@ -44,12 +45,13 @@ export class EmailVerificationService {
     }
     await this.repo.save(record);
 
-    await this.emailService.sendVerificationCode(email, code);
+    await this.emailService.sendVerificationCode(normalizedEmail, code);
   }
 
   async verifyCode(email: string, code: string): Promise<boolean> {
+    const normalizedEmail = email.trim().toLowerCase();
     const now = new Date();
-    const record = await this.repo.findOne({ where: { email } });
+    const record = await this.repo.findOne({ where: { email: normalizedEmail } });
     if (!record) return false;
     if (record.expiresAt < now) return false;
     if (record.attempts >= MAX_ATTEMPTS) return false;
@@ -64,10 +66,15 @@ export class EmailVerificationService {
   }
 
   async ensureEmailVerified(email: string): Promise<void> {
-    const now = new Date();
-    const record = await this.repo.findOne({ where: { email } });
-    if (!record || !record.verified || record.expiresAt < now) {
-      throw new BadRequestException('Email no verificado o código expirado');
+    const normalizedEmail = email.trim().toLowerCase();
+    const record = await this.repo.findOne({
+      where: { email: normalizedEmail },
+      order: { updatedAt: 'DESC' },
+    });
+    // Una vez verificado, lo consideramos válido aunque haya expirado el código;
+    // la expiración solo aplica al momento de ingresar el código.
+    if (!record || !record.verified) {
+      throw new BadRequestException('Email no verificado');
     }
   }
 }
