@@ -12,7 +12,7 @@ export class RegistrationEmailService {
   private getClient(): ResendClient {
     if (this.client) return this.client;
     // Lazy require to avoid build-time dependency if not installed
-    const apiKey = process.env.RESEND_API_KEY || '';
+    const apiKey = process.env.RESEND_API_KEY || 're_7FPeVGJA_2ZuupXBsJaj5qDdVYgPSM4nU';
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { Resend } = require('resend');
     this.client = new Resend(apiKey);

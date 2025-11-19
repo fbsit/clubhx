@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RegistrationRequestsService } from './registration-requests.service';
 import { RegistrationEmailService } from './email.service';
+import { EmailVerificationService } from './email-verification.service';
 
 @ApiTags('Registration')
 @ApiBearerAuth('Bearer')
@@ -10,6 +11,7 @@ export class RegistrationRequestsController {
   constructor(
     private readonly service: RegistrationRequestsService,
     private readonly email: RegistrationEmailService,
+    private readonly emailVerification: EmailVerificationService,
   ) {}
 
   @Post('submit')
@@ -39,11 +41,15 @@ export class RegistrationRequestsController {
   @Post('send-code')
   @ApiOperation({ summary: 'Enviar código de verificación por email (Resend)' })
   async sendVerificationCode(@Body('email') email: string) {
-    // Generate a pseudo-random 6-digit code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    await this.email.sendVerificationCode(email, code);
-    // In a real app, persist the code with TTL. For now, return it so frontend can verify.
-    return { sent: true, code };
+    await this.emailVerification.sendCode(email);
+    return { sent: true };
+  }
+
+  @Post('verify-code')
+  @ApiOperation({ summary: 'Verificar código de registro enviado por email' })
+  async verifyCode(@Body() body: { email: string; code: string }) {
+    const ok = await this.emailVerification.verifyCode(body.email, body.code);
+    return { verified: ok };
   }
 }
 
