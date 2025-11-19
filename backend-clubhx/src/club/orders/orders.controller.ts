@@ -16,11 +16,11 @@ export class OrdersController {
   @ApiOperation({
     summary: 'Listar pedidos',
     description:
-      'Lista pedidos desde upstream. Si se incluye Authorization, serán pedidos del usuario correspondiente. Se puede filtrar por cliente usando ?client={id}.',
+      'Lista pedidos desde upstream. Si se incluye Authorization, serán pedidos del usuario correspondiente.',
   })
   @ApiResponse({ status: 200, description: 'Listado paginado de pedidos' })
   async list(
-    @Query() query: PaginationQueryDto & { client?: string },
+    @Query() query: PaginationQueryDto,
     @Res() res: Response,
     @Headers('authorization') authorization?: string,
   ) {
@@ -51,13 +51,14 @@ export class OrdersController {
     return res.status(upstream.status).send(upstream.data);
   }
 
-  // Removed /my: use /by-client or /by-seller instead
+  // Removed /my: use /by-seller instead
 
-  // New: list orders by client (provider: /api/v1/order?client=pk&page=int)
+  // Legacy alias: list orders by client.
+  // Ya no envía el parámetro client al upstream; el scope se determina por el token.
   @Get('/by-client')
   @ApiOperation({ summary: 'Listar pedidos por cliente', description: 'Lista pedidos para un cliente específico' })
   async listByClient(
-    @Query('client') client: string,
+    @Query('client') _client: string,
     @Res() res: Response,
     @Query('page') page?: string,
     @Headers('authorization') authorization?: string,
@@ -66,7 +67,7 @@ export class OrdersController {
       ? (authorization.startsWith('Bearer ') ? `Token ${authorization.slice(7)}` : authorization)
       : undefined;
     const upstream = await this.api.request('get', '/api/v1/order', {
-      query: { client, ...(page ? { page } : {}) },
+      query: page ? { page } : undefined,
       headers: authHeader ? { Authorization: authHeader } : undefined,
       useAuthHeader: authHeader ? false : undefined,
     });

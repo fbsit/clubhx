@@ -147,11 +147,13 @@ export async function listOrders(params: OrdersListParams = {}) {
   return fetchJson(url);
 }
 
-export async function listOrdersByClient(clientId: string, page?: number) {
+// Alias de conveniencia para el portal de cliente.
+// Ya no envía el parámetro client; el backend y el servicio externo
+// determinan el cliente según el token recibido.
+export async function listOrdersByClient(_clientId: string, page?: number) {
   const qs = new URLSearchParams();
-  qs.set('client', clientId);
   if (page != null) qs.set('page', String(page));
-  const url = `/api/v1/order?${qs.toString()}`;
+  const url = qs.toString() ? `/api/v1/order?${qs.toString()}` : `/api/v1/order`;
   return fetchJson(url);
 }
 
