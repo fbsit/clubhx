@@ -27,6 +27,19 @@ export class LoyaltyController {
     const expirations = await this.loyalty.getUpcomingExpirations(customerId, monthsAhead);
     return { months: monthsAhead, expirations };
   }
+
+  @Get('points-earned')
+  @HttpCode(HttpStatus.OK)
+  async getPointsEarned(
+    @Headers('authorization') authorization?: string,
+    @Query('months') months?: string,
+    @Query('client') client?: string,
+  ) {
+    const customerId = client || (authorization ? authorization.slice(-16) : 'anonymous');
+    const monthsInt = Math.max(1, Math.min(24, Number(months || 12)));
+    const earned = await this.loyalty.getPointsEarnedLastMonths(customerId, monthsInt);
+    return { months: monthsInt, earned };
+  }
 }
 
 

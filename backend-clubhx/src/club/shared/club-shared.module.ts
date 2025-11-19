@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { ClubApiService } from './club-api.service';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -10,9 +11,10 @@ import { ClubApiService } from './club-api.service';
       maxRedirects: 5,
       validateStatus: () => true,
     }),
+    EmailModule,
   ],
   providers: [ClubApiService],
-  exports: [ClubApiService, HttpModule],
+  exports: [ClubApiService, HttpModule, EmailModule],
 })
 export class ClubSharedModule {}
 

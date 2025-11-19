@@ -166,6 +166,27 @@ export class LoyaltyModuleService {
       return results;
     }
   
+    /**
+     * Total de puntos generados (delta positivo) en los últimos N meses.
+     * No descuenta canjes; es el historial de acumulación para progresión de nivel.
+     */
+    async getPointsEarnedLastMonths(customerId: string, months: number = 12): Promise<number> {
+      const txRepo = this.dataSource.getRepository(LoyaltyTransaction);
+      const since = new Date();
+      since.setMonth(since.getMonth() - Math.max(1, months));
+      const txs = await txRepo.find({
+        where: { customer_id: customerId },
+        order: { created_at: 'DESC' },
+      });
+      let total = 0;
+      for (const tx of txs) {
+        if (tx.created_at >= since && tx.points_delta > 0) {
+          total += tx.points_delta;
+        }
+      }
+      return total;
+    }
+
     async calculatePointsFromAmount(amount: number): Promise<number> {
       // Conversion: 1 point = 1,000 CLP in purchases
       // Round down to nearest whole point

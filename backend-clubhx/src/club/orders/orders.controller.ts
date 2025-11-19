@@ -11,13 +11,26 @@ export class OrdersController {
   constructor(private readonly api: ClubApiService) {}
 
   @Get('/')
-  @ApiOperation({ summary: 'Listar pedidos', description: 'Lista pedidos desde upstream. Si se incluye Authorization, serán pedidos del usuario correspondiente.' })
+  @ApiOperation({
+    summary: 'Listar pedidos',
+    description:
+      'Lista pedidos desde upstream. Si se incluye Authorization, serán pedidos del usuario correspondiente. Se puede filtrar por cliente usando ?client={id}.',
+  })
   @ApiResponse({ status: 200, description: 'Listado paginado de pedidos' })
-  async list(@Query() query: PaginationQueryDto, @Res() res: Response, @Headers('authorization') authorization?: string) {
+  async list(
+    @Query() query: PaginationQueryDto & { client?: string },
+    @Res() res: Response,
+    @Headers('authorization') authorization?: string,
+  ) {
     const authHeader = authorization
-      ? (authorization.startsWith('Bearer ') ? `Token ${authorization.slice(7)}` : authorization)
+      ? authorization.startsWith('Bearer ')
+        ? `Token ${authorization.slice(7)}`
+        : authorization
       : undefined;
-    const upstream = await this.api.request('get', '/api/v1/order/', { 
+
+    // Siempre usamos el mismo endpoint upstream `/api/v1/order/`
+    // y dejamos que acepte cualquier query param (incluyendo `client`).
+    const upstream = await this.api.request('get', '/api/v1/order/', {
       query,
       headers: authHeader ? { Authorization: authHeader } : undefined,
       useAuthHeader: authHeader ? false : undefined,
@@ -27,7 +40,7 @@ export class OrdersController {
 
   // Removed /my: use /by-client or /by-seller instead
 
-  // New: list orders by client (provider: /api/v1/clientorders/?client=pk&page=int)
+  // New: list orders by client (provider: /api/v1/order/?client=pk&page=int)
   @Get('/by-client')
   @ApiOperation({ summary: 'Listar pedidos por cliente', description: 'Lista pedidos para un cliente específico' })
   async listByClient(
@@ -39,7 +52,7 @@ export class OrdersController {
     const authHeader = authorization
       ? (authorization.startsWith('Bearer ') ? `Token ${authorization.slice(7)}` : authorization)
       : undefined;
-    const upstream = await this.api.request('get', '/api/v1/clientorders/', {
+    const upstream = await this.api.request('get', '/api/v1/order/', {
       query: { client, ...(page ? { page } : {}) },
       headers: authHeader ? { Authorization: authHeader } : undefined,
       useAuthHeader: authHeader ? false : undefined,
