@@ -147,13 +147,11 @@ export async function listOrders(params: OrdersListParams = {}) {
   return fetchJson(url);
 }
 
-// Removed listMyOrders: use listOrdersByClient for client flows
-
 export async function listOrdersByClient(clientId: string, page?: number) {
   const qs = new URLSearchParams();
   qs.set('client', clientId);
   if (page != null) qs.set('page', String(page));
-  const url = `/api/v1/order/by-client?${qs.toString()}`;
+  const url = `/api/v1/order/?${qs.toString()}`;
   return fetchJson(url);
 }
 

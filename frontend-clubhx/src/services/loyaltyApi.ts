@@ -11,3 +11,9 @@ export async function fetchMyPointsExpiring(months = 6, clientId?: string): Prom
   const url = clientId ? `${base}&client=${encodeURIComponent(clientId)}` : base;
   return fetchJson<{ months: number; expirations: PointsExpiringItem[] }>(url);
 }
+
+export async function fetchMyPointsEarned(months = 12, clientId?: string): Promise<{ months: number; earned: number }> {
+  const base = `/api/v1/loyalty/points-earned?months=${months}`;
+  const url = clientId ? `${base}&client=${encodeURIComponent(clientId)}` : base;
+  return fetchJson<{ months: number; earned: number }>(url);
+}

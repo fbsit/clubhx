@@ -18,7 +18,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect, useState } from "react";
 import { getDashboardMetrics } from "@/services/dashboardApi";
 import { TIER_CONFIG, CustomerTier } from "@/types/loyalty";
-import { fetchMyLoyaltyPoints, fetchMyPointsExpiring, PointsExpiringItem } from "@/services/loyaltyApi";
+import { fetchMyLoyaltyPoints, fetchMyPointsExpiring, PointsExpiringItem, fetchMyPointsEarned } from "@/services/loyaltyApi";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Component for status cards with consistent styling
@@ -42,7 +42,9 @@ const StatusCard = ({ icon, title, value, subtitle, gradient, delay = 0 }: Statu
 
 // Loyalty tier display component with progress to next tier
 const LoyaltyTierDisplay = () => {
-  // Until real tier history exists, show Standard tier and zero progress using real points for display only
+  const { user } = useAuth();
+  const [points12Months, setPoints12Months] = useState<number>(0);
+  // Por ahora mantenemos tier estático; el progreso usa el historial real de 12 meses
   const currentTier: CustomerTier = 'standard';
   const tierConfig = TIER_CONFIG[currentTier];
   
@@ -54,8 +56,20 @@ const LoyaltyTierDisplay = () => {
   };
 
   const nextTier = getNextTier();
-  const points12Months = 0;
-  const progressPercentage = nextTier ? 0 : 100;
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const clientId = String(user?.id || user?.providerClientPk || '');
+        const { earned } = await fetchMyPointsEarned(12, clientId);
+        if (!cancelled) setPoints12Months(earned ?? 0);
+      } catch {
+        if (!cancelled) setPoints12Months(0);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, user?.providerClientPk]);
+  const progressPercentage = nextTier ? Math.min(100, (points12Months / nextTier.minPoints) * 100) : 100;
 
   const getGradientConfig = () => ({
     gradient: 'bg-gradient-to-br from-green-100 via-emerald-200 to-green-200',

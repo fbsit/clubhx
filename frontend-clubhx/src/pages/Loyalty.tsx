@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Progress } from "@/components/ui/progress";
 import { TIER_CONFIG } from "@/types/loyalty";
-import { fetchMyLoyaltyPoints } from "@/services/loyaltyApi";
+import { fetchMyLoyaltyPoints, fetchMyPointsEarned } from "@/services/loyaltyApi";
 import ClientLoyaltyView from "@/components/loyalty/ClientLoyaltyView";
 import { useMyRedemptions } from "@/hooks/useLoyaltyRewards";
 import AdminLoyaltyProducts from "@/pages/admin/AdminLoyaltyProducts";
@@ -30,8 +30,16 @@ export default function Loyalty() {
     let cancelled = false;
     (async () => {
       try {
-        const { points } = await fetchMyLoyaltyPoints(String(user?.id || user?.providerClientPk || ''));
+        const clientId = String(user?.id || user?.providerClientPk || '');
+        const [{ points }, earnedRes] = await Promise.all([
+          fetchMyLoyaltyPoints(clientId),
+          fetchMyPointsEarned(12, clientId),
+        ]);
         if (!cancelled) setTotalPoints(points ?? 0);
+        if (!cancelled) setTierInfo((prev) => ({
+          ...prev,
+          pointsLast12Months: earnedRes?.earned ?? 0,
+        }));
       } catch {
         if (!cancelled) setTotalPoints(0);
       }
