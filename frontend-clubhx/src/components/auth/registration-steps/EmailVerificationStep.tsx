@@ -4,8 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Check, Clock, RefreshCw } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { sendVerificationCode } from "@/services/registrationApi";
+import { sendVerificationCode, verifyRegistrationCode } from "@/services/registrationApi";
 import { toast } from "sonner";
 
 interface EmailVerificationStepProps {
@@ -23,15 +22,12 @@ export default function EmailVerificationStep({
   const [isLoading, setIsLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
   const [canResend, setCanResend] = useState(false);
-  const { verifyEmail } = useAuth();
-  const [serverCode, setServerCode] = useState<string | null>(null);
 
   useEffect(() => {
     // Request server to send a verification code via email on mount
     (async () => {
       try {
-        const res = await sendVerificationCode(email);
-        setServerCode(res.code ?? null);
+        await sendVerificationCode(email);
       } catch {
         toast.error("No se pudo enviar el código de verificación");
       }
@@ -55,7 +51,7 @@ export default function EmailVerificationStep({
 
     setIsLoading(true);
     try {
-      const isValid = serverCode ? verificationCode === serverCode : await verifyEmail(email, verificationCode);
+      const { verified: isValid } = await verifyRegistrationCode(email, verificationCode);
       if (isValid) {
         onVerified();
       } else {
@@ -73,8 +69,7 @@ export default function EmailVerificationStep({
     setCanResend(false);
     setVerificationCode("");
     try {
-      const res = await sendVerificationCode(email);
-      setServerCode(res.code ?? null);
+      await sendVerificationCode(email);
       toast.success("Código de verificación enviado nuevamente");
     } catch {
       toast.error("No se pudo reenviar el código");

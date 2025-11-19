@@ -45,6 +45,13 @@ export async function sendVerificationCode(email: string): Promise<{ sent: boole
   });
 }
 
+export async function verifyRegistrationCode(email: string, code: string): Promise<{ verified: boolean }> {
+  return fetchJson(`/api/v1/registration/verify-code`, {
+    method: "POST",
+    body: JSON.stringify({ email, code }),
+  });
+}
+
 export async function clientRegister(payload: { rut: string; name: string; email: string; phone: string; password: string }) {
   return fetchJson(`/api/client-register/`, {
     method: 'POST',
