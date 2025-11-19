@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Delete, Query, Res, Headers } from '@nestjs/common';
+import { Controller, Get, Param, Delete, Query, Res, Headers, Logger } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { ClubApiService } from '../shared/club-api.service';
@@ -8,6 +8,8 @@ import { PaginationQueryDto } from '../shared/dto/common.dto';
 @ApiBearerAuth('Bearer')
 @Controller('api/v1/order')
 export class OrdersController {
+  private readonly logger = new Logger(OrdersController.name);
+
   constructor(private readonly api: ClubApiService) {}
 
   @Get('/')
@@ -22,6 +24,10 @@ export class OrdersController {
     @Res() res: Response,
     @Headers('authorization') authorization?: string,
   ) {
+    this.logger.debug(
+      `Incoming GET /api/v1/order with query=${JSON.stringify(query)} auth=${authorization ? 'yes' : 'no'}`,
+    );
+
     const authHeader = authorization
       ? authorization.startsWith('Bearer ')
         ? `Token ${authorization.slice(7)}`
@@ -30,11 +36,27 @@ export class OrdersController {
 
     // Siempre usamos el mismo endpoint upstream `/api/v1/order/`
     // y dejamos que acepte cualquier query param (incluyendo `client`).
+    this.logger.debug(
+      `Calling upstream GET /api/v1/order/ with query=${JSON.stringify(query)} authHeader=${
+        authHeader ? 'custom' : 'default'
+      }`,
+    );
+
     const upstream = await this.api.request('get', '/api/v1/order/', {
       query,
       headers: authHeader ? { Authorization: authHeader } : undefined,
       useAuthHeader: authHeader ? false : undefined,
     });
+
+    this.logger.debug(
+      `Upstream /api/v1/order/ responded status=${upstream.status} payloadSample=${JSON.stringify(
+        Array.isArray((upstream as any).data)
+          ? (upstream as any).data.slice(0, 1)
+          : (upstream as any).data && typeof (upstream as any).data === 'object'
+          ? { ...((upstream as any).data as any), results: undefined }
+          : (upstream as any).data,
+      )}`,
+    );
     return res.status(upstream.status).send(upstream.data);
   }
 
