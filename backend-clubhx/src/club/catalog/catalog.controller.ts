@@ -24,11 +24,40 @@ export class CatalogController {
         : authorization
       : undefined;
 
-    const upstream = await this.api.request('get', '/api/v1/prodcategories/', {
+    const upstream = await this.api.request<any>('get', '/api/v1/prodcategories/', {
       headers: authHeader ? { Authorization: authHeader } : undefined,
       useAuthHeader: authHeader ? false : undefined,
     });
-    return res.status(upstream.status).send(upstream.data);
+    const raw = upstream.data as any;
+
+    // If upstream already returns an array, forward directly for backward compatibility
+    if (Array.isArray(raw)) {
+      return res.status(upstream.status).send(raw);
+    }
+
+    const familyNames: string[] = Array.isArray(raw.family_names) ? raw.family_names : [];
+
+    // Normalize provider data into a flat list of "categories" based on family_names
+    const normalizedCategories: Category[] = familyNames
+      .filter((name) => typeof name === 'string' && name.trim().length > 0)
+      .map((name, index) => ({
+        id: String(index),
+        name: name.trim(),
+        description: undefined,
+        icon: undefined,
+        order: index,
+        productCount: 0,
+      }));
+
+    const payload = {
+      categories: normalizedCategories,
+      brands: raw.brands ?? [],
+      familyNames: raw.family_names ?? [],
+      subfamilyNames: raw.subfamily_name_list ?? [],
+      subsubfamilyNames: raw.subsubfamily_name_list ?? [],
+    };
+
+    return res.status(upstream.status).send(payload);
   }
 
   @Post('categories')

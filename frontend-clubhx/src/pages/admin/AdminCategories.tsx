@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useEffect } from "react";
 import { fetchProducts } from "@/services/productsApi";
-import { listCategories, createCategory, updateCategory, deleteCategory, Category } from "@/services/catalogApi";
+import { listCategories, createCategory, updateCategory, deleteCategory, Category, getCatalogStructure } from "@/services/catalogApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +42,10 @@ export default function AdminCategories() {
   }, []);
 
   const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [catalogBrands, setCatalogBrands] = useState<string[]>([]);
+  const [catalogFamilyNames, setCatalogFamilyNames] = useState<string[]>([]);
+  const [catalogSubfamilyNames, setCatalogSubfamilyNames] = useState<string[]>([]);
+  const [catalogSubsubfamilyNames, setCatalogSubsubfamilyNames] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,14 +53,19 @@ export default function AdminCategories() {
       try {
         setLoading(true);
         setError(null);
-        const [prods, cats] = await Promise.all([
+        const [prods, structure] = await Promise.all([
           fetchProducts(500),
-          listCategories(),
+          getCatalogStructure(),
         ]);
         if (!cancelled) {
+          const cats = structure.categories as Category[];
           setProducts(prods);
+          setCatalogBrands(structure.brands);
+          setCatalogFamilyNames(structure.familyNames);
+          setCatalogSubfamilyNames(structure.subfamilyNames);
+          setCatalogSubsubfamilyNames(structure.subsubfamilyNames);
           setCategories(
-            (cats as Category[]).map((c) => ({
+            cats.map((c) => ({
               id: c.id,
               name: c.name,
               description: c.description,
@@ -208,6 +217,47 @@ export default function AdminCategories() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Estructura del catálogo (conexiones básicas) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Estructura del Catálogo</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+          <div>
+            <p className="font-semibold mb-1">Marcas ({catalogBrands.length})</p>
+            <div className="max-h-40 overflow-y-auto space-y-1">
+              {catalogBrands.map((b, idx) => (
+                <div key={idx} className="text-muted-foreground truncate">{b || "(sin nombre)"}</div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="font-semibold mb-1">Familias ({catalogFamilyNames.length})</p>
+            <div className="max-h-40 overflow-y-auto space-y-1">
+              {catalogFamilyNames.map((f, idx) => (
+                <div key={idx} className="text-muted-foreground truncate">{f || "(sin nombre)"}</div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="font-semibold mb-1">Subfamilias ({catalogSubfamilyNames.length})</p>
+            <div className="max-h-40 overflow-y-auto space-y-1">
+              {catalogSubfamilyNames.map((sf, idx) => (
+                <div key={idx} className="text-muted-foreground truncate">{sf || "(sin nombre)"}</div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="font-semibold mb-1">Segmentos ({catalogSubsubfamilyNames.length})</p>
+            <div className="max-h-40 overflow-y-auto space-y-1">
+              {catalogSubsubfamilyNames.map((ssf, idx) => (
+                <div key={idx} className="text-muted-foreground truncate">{ssf || "(sin nombre)"}</div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {loading && <div className="text-sm text-muted-foreground">Cargando…</div>}
       {error && <div className="text-sm text-red-600">{error}</div>}

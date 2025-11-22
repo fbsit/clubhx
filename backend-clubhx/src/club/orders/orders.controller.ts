@@ -43,12 +43,37 @@ export class OrdersController {
       `Orders upstream request: GET ${finalUrl} authHeader=${authHeader ? 'custom' : 'default'}`,
     );
 
-    const upstream = await this.api.request('get', '/api/v1/order', {
-      query,
-      headers: authHeader ? { Authorization: authHeader } : undefined,
-      useAuthHeader: authHeader ? false : undefined,
-    });
-    return res.status(upstream.status).send(upstream.data);
+    try {
+      const upstream = await this.api.request<any>('get', '/api/v1/order', {
+        query,
+        headers: authHeader ? { Authorization: authHeader } : undefined,
+        useAuthHeader: authHeader ? false : undefined,
+      });
+
+      const data: any = upstream.data;
+      const total =
+        typeof data?.count === 'number'
+          ? data.count
+          : Array.isArray(data?.results)
+          ? data.results.length
+          : Array.isArray(data)
+          ? data.length
+          : 0;
+
+      this.logger.debug(
+        `Orders upstream response: status=${upstream.status} total=${total} errorDetail=${
+          data?.detail ?? data?.error ?? 'n/a'
+        }`,
+      );
+
+      return res.status(upstream.status).send(upstream.data);
+    } catch (error: any) {
+      this.logger.error(
+        `Orders upstream exception for ${finalUrl}: ${error?.message ?? error}`,
+        error?.stack,
+      );
+      throw error;
+    }
   }
 
   // Removed /my: use /by-seller instead
