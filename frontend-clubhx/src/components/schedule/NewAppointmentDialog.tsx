@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,13 +21,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Video, User } from "lucide-react";
-const purposeLabels: Record<string,string> = {};
+import { listVisits } from "@/services/visitsApi";
+
+// Propósitos disponibles para la reunión
+const purposeLabels: Record<string,string> = {
+  product_demo: "Presentación de productos",
+  new_brand: "Introducción de nueva marca",
+  training: "Capacitación / formación",
+  follow_up: "Seguimiento de pedidos o proyectos",
+  collection: "Cobranza / pagos",
+  other: "Otro motivo",
+};
 import { AdvancedScheduleSelector } from "./AdvancedScheduleSelector";
 
 interface NewAppointmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: any) => void;
+  initialDate?: Date | null;
+  customerId?: string;
 }
 
 // Fixed sales person assigned to this client
@@ -39,7 +51,7 @@ const assignedSalesPerson = {
   avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80"
 };
 
-export function NewAppointmentDialog({ open, onOpenChange, onSubmit }: NewAppointmentDialogProps) {
+export function NewAppointmentDialog({ open, onOpenChange, onSubmit, initialDate, customerId }: NewAppointmentDialogProps) {
   const [date, setDate] = useState<Date>();
   const [formData, setFormData] = useState({
     title: "",
@@ -51,12 +63,59 @@ export function NewAppointmentDialog({ open, onOpenChange, onSubmit }: NewAppoin
     location: "",
     notes: ""
   });
+  const [errors, setErrors] = useState<{ date?: string; time?: string; purpose?: string }>({});
+  const [busyTimes, setBusyTimes] = useState<string[]>([]);
+
+  // Cuando se abre el diálogo, usar la fecha preseleccionada (si existe)
+  useEffect(() => {
+    if (open) {
+      if (initialDate) {
+        setDate(initialDate);
+      } else if (!date) {
+        setDate(new Date());
+      }
+    }
+  }, [open, initialDate]);
+
+  // Cada vez que cambia la fecha o se abre el diálogo, consultar citas para ese día
+  useEffect(() => {
+    const loadBusyTimes = async () => {
+      if (!open || !date || !customerId) {
+        setBusyTimes([]);
+        return;
+      }
+      try {
+        const from = new Date(date);
+        from.setHours(0, 0, 0, 0);
+        const to = new Date(date);
+        to.setHours(23, 59, 59, 999);
+        const visits = await listVisits({
+          from: from.toISOString(),
+          to: to.toISOString(),
+          customerId: customerId,
+        });
+        setBusyTimes(visits.map(v => v.time).filter(Boolean));
+      } catch {
+        setBusyTimes([]);
+      }
+    };
+    loadBusyTimes();
+  }, [open, date, customerId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!date || !formData.time || !formData.purpose) {
+
+    const nextErrors: typeof errors = {};
+    if (!date) nextErrors.date = "Selecciona una fecha para la reunión";
+    if (!formData.time) nextErrors.time = "Selecciona un horario disponible";
+    if (!formData.purpose) nextErrors.purpose = "Selecciona el propósito de la reunión";
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
       return;
     }
+
+    setErrors({});
 
     onSubmit({
       ...formData,
@@ -82,6 +141,13 @@ export function NewAppointmentDialog({ open, onOpenChange, onSubmit }: NewAppoin
 
   const updateFormData = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Limpiar error específico al corregir el campo
+    if (field === "purpose" && errors.purpose) {
+      setErrors(prev => ({ ...prev, purpose: undefined }));
+    }
+    if (field === "time" && errors.time) {
+      setErrors(prev => ({ ...prev, time: undefined }));
+    }
   };
 
   return (
@@ -141,6 +207,9 @@ export function NewAppointmentDialog({ open, onOpenChange, onSubmit }: NewAppoin
                 ))}
               </SelectContent>
             </Select>
+            {errors.purpose && (
+              <p className="text-xs text-destructive mt-1">{errors.purpose}</p>
+            )}
           </div>
 
           {/* Descripción */}
@@ -185,8 +254,14 @@ export function NewAppointmentDialog({ open, onOpenChange, onSubmit }: NewAppoin
             selectedDate={date}
             selectedTime={formData.time}
             onDateChange={setDate}
-            onTimeChange={(time) => updateFormData("time", time)}
+      onTimeChange={(time) => updateFormData("time", time)}
+      occupiedTimes={busyTimes}
           />
+          {(errors.date || errors.time) && (
+            <p className="text-xs text-destructive mt-1">
+              {errors.date || errors.time}
+            </p>
+          )}
 
           {/* Duración */}
           <div className="space-y-2">

@@ -23,7 +23,9 @@ import {
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TIER_CONFIG } from "@/types/loyalty";
-import { fetchMyLoyaltyPoints } from "@/services/loyaltyApi";
+import { fetchMyLoyaltyPoints, fetchMyPointsExpiring, fetchMyPointsEarned, PointsExpiringItem } from "@/services/loyaltyApi";
+import { useAuth } from "@/contexts/AuthContext";
+import { useMyRedemptions } from "@/hooks/useLoyaltyRewards";
 
 export default function PointsDetail() {
   const [searchParams] = useSearchParams();
@@ -31,33 +33,55 @@ export default function PointsDetail() {
   const isMobile = useIsMobile();
   const initialFilter = searchParams.get('filter') || 'all';
   const [activeFilter, setActiveFilter] = useState(initialFilter);
+  const { user } = useAuth();
   
   const [availablePoints, setAvailablePoints] = useState<number>(0);
-  const pointsLast12Months = 0;
+  const [pointsLast12Months, setPointsLast12Months] = useState<number>(0);
   const currentTierConfig = TIER_CONFIG['standard'];
-  
-  // Calculate statistics
-  const pendingPoints = 0;
-  const expiredPoints = 0;
-  const redeemedPoints = 0;
+  const [expiringPoints, setExpiringPoints] = useState<PointsExpiringItem[]>([]);
 
-  // Find points expiring in next 6 months
-  const sixMonthsFromNow = new Date();
-  sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
-  const expiringPoints: Array<{ points: number }> = [];
+  // Redemptions (pending and delivered) to derive pending / redeemed points
+  const clientId = String(user?.id || user?.providerClientPk || "");
+  const allRedemptions = useMyRedemptions(undefined, true, clientId);
+  const pendingRedemptions = useMyRedemptions('pending', true, clientId);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const { points } = await fetchMyLoyaltyPoints();
-        if (!cancelled) setAvailablePoints(points ?? 0);
+        const clientId = String(user?.id || user?.providerClientPk || "");
+        const [{ points }, earnedRes, expiringRes] = await Promise.all([
+          fetchMyLoyaltyPoints(clientId),
+          fetchMyPointsEarned(12, clientId),
+          fetchMyPointsExpiring(6, clientId),
+        ]);
+        if (!cancelled) {
+          setAvailablePoints(points ?? 0);
+          setPointsLast12Months(earnedRes?.earned ?? 0);
+          setExpiringPoints(expiringRes?.expirations ?? []);
+        }
       } catch {
-        if (!cancelled) setAvailablePoints(0);
+        if (!cancelled) {
+          setAvailablePoints(0);
+          setPointsLast12Months(0);
+          setExpiringPoints([]);
+        }
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [user?.id, user?.providerClientPk]);
+
+  // Calculate statistics from redemptions
+  const pendingPoints = pendingRedemptions.items.reduce(
+    (sum, r: any) => sum + (r.points_spent ?? 0),
+    0,
+  );
+  // Total de puntos ya descontados por canjes (pendientes o entregados)
+  const redeemedPoints = allRedemptions.items.reduce(
+    (sum, r: any) => sum + (r.points_spent ?? 0),
+    0,
+  );
+  const expiredPoints = 0; // aún no tenemos endpoint específico de expirados
 
   // Handle filter changes
   const handleFilterChange = (newFilter: string) => {
@@ -199,7 +223,9 @@ export default function PointsDetail() {
                 <AlertTriangle className="h-5 w-5 text-orange-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{expiringPoints.reduce((sum, t) => sum + t.points, 0).toLocaleString()}</div>
+                <div className="text-2xl font-bold">
+                  {expiringPoints.reduce((sum, t) => sum + (t.expires ?? (t as any).points ?? 0), 0).toLocaleString()}
+                </div>
                 <div className="text-sm text-muted-foreground">Por expirar</div>
               </div>
             </div>

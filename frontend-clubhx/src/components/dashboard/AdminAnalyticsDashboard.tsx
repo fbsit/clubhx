@@ -47,9 +47,10 @@ interface KPICardProps {
   icon: React.ComponentType<any>;
   description?: string;
   isMobile: boolean;
+  loading?: boolean;
 }
 
-const KPICard = ({ title, value, change, trend, icon: Icon, description, isMobile }: KPICardProps) => {
+const KPICard = ({ title, value, change, trend, icon: Icon, description, isMobile, loading }: KPICardProps) => {
   const getCardStyles = (title: string) => {
     const styles = {
       "Ventas del Mes": "bg-card/50 border-border hover:shadow-lg",
@@ -80,14 +81,20 @@ const KPICard = ({ title, value, change, trend, icon: Icon, description, isMobil
             </div>
             <CardTitle className={`${isMobile ? 'text-sm' : 'text-base'}`}>{title}</CardTitle>
           </div>
-          <div className={`flex items-center gap-1 ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-            {trend === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-            <span className="text-xs font-medium">{change}</span>
-          </div>
+          {!loading && (
+            <div className={`flex items-center gap-1 ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+              {trend === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+              <span className="text-xs font-medium">{change}</span>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className={isMobile ? 'px-4 pb-4' : ''}>
-        <p className={`font-bold ${isMobile ? 'text-xl mb-1' : 'text-2xl mb-2'}`}>{value}</p>
+        {loading ? (
+          <div className="h-6 w-20 rounded bg-muted animate-pulse" />
+        ) : (
+          <p className={`font-bold ${isMobile ? 'text-xl mb-1' : 'text-2xl mb-2'}`}>{value}</p>
+        )}
         {description && (
           <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>{description}</p>
         )}
@@ -172,7 +179,7 @@ export default function AdminAnalyticsDashboard() {
   };
 
   const currentData = getPeriodData(selectedPeriod);
-  const ventasDelMes = metrics ? formatCurrency(metrics.totalSales) : currentData.sales;
+  const ventasDelMes = metrics ? formatCurrency(Number.isFinite(metrics.totalSales) ? metrics.totalSales : 0) : currentData.sales;
   const cotizaciones = metrics ? String(metrics.totalOrders) : currentData.quotes;
   const porCobrar = metrics ? String(metrics.pendingPayments) : currentData.receivables;
 
@@ -218,6 +225,7 @@ export default function AdminAnalyticsDashboard() {
           icon={DollarSign}
           description="vs mes anterior"
           isMobile={isMobile}
+          loading={metricsLoading}
         />
         <KPICard
           title="Crecimiento"
@@ -227,6 +235,7 @@ export default function AdminAnalyticsDashboard() {
           icon={TrendingUp}
           description="vs mismo período anterior"
           isMobile={isMobile}
+          loading={metricsLoading}
         />
         <KPICard
           title="Por Cobrar"
@@ -236,6 +245,7 @@ export default function AdminAnalyticsDashboard() {
           icon={Target}
           description={metrics ? "pendiente(s)" : "pendiente de cobro"}
           isMobile={isMobile}
+          loading={metricsLoading}
         />
         <KPICard
           title="Cotizaciones"
@@ -245,6 +255,7 @@ export default function AdminAnalyticsDashboard() {
           icon={FileText}
           description="este mes"
           isMobile={isMobile}
+          loading={metricsLoading}
         />
       </div>
 

@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ClientScheduleCalendar } from "@/components/schedule/ClientScheduleCalendar";
 import { AppointmentCard } from "@/components/schedule/AppointmentCard";
 import { NewAppointmentDialog } from "@/components/schedule/NewAppointmentDialog";
-import { listVisits } from "@/services/visitsApi";
+import { listVisits, createVisit } from "@/services/visitsApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { RescheduleAppointmentDialog } from "@/components/schedule/RescheduleAppointmentDialog";
 import { GoogleCalendarIntegration } from "@/components/schedule/GoogleCalendarIntegration";
@@ -98,11 +98,62 @@ export default function ClientSchedule() {
     return appointments.filter(apt => isSameDay(apt.date, selectedDate));
   };
 
-  const handleNewAppointment = (data: any) => {
-    toast({
-      title: "Cita solicitada",
-      description: "Tu solicitud de cita ha sido enviada. Te contactaremos pronto para confirmar.",
-    });
+  const handleNewAppointment = async (data: any) => {
+    try {
+      const clientId = user?.id || user?.providerClientPk;
+      if (!clientId) {
+        toast({
+          title: "No se pudo identificar tu cuenta",
+          description: "Inicia sesión nuevamente para solicitar una cita.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const payload = {
+        salesPersonId: data.salesPerson.id,
+        salesPersonName: data.salesPerson.name,
+        customerId: String(clientId),
+        customerName: user?.name || user?.company || "Cliente",
+        date: data.date.toISOString(),
+        time: data.time,
+        duration: data.duration,
+        status: "requested" as const,
+        visitType: data.purpose || "meeting",
+        meetingType: data.type,
+        description: data.description || data.notes || "",
+        meetingLink: data.type === "videollamada" ? "" : null,
+        priority: "medium" as const,
+      };
+
+      const created = await createVisit(payload as any);
+
+      // Actualizar la lista local de citas para reflejar la nueva solicitud
+      setAppointments(prev => [
+        ...prev,
+        {
+          id: created.id,
+          date: new Date(created.date),
+          status: created.status,
+          title: data.title,
+          location: created.meetingType === "presencial" ? created.customerName : `Videollamada - ${created.meetingLink || ""}`,
+          notes: created.description,
+          time: created.time,
+          salesPerson: data.salesPerson,
+        } as any,
+      ]);
+
+      toast({
+        title: "Cita solicitada",
+        description: "Tu solicitud de cita ha sido enviada. Tu ejecutivo la revisará y confirmará contigo.",
+      });
+    } catch (e: any) {
+      toast({
+        title: "No se pudo solicitar la cita",
+        description: e?.message || "Intenta nuevamente más tarde.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleReschedule = (appointment: ClientAppointment) => {
@@ -212,7 +263,7 @@ export default function ClientSchedule() {
                   {format(appointment.date, "dd 'de' MMMM 'a las' HH:mm", { locale: es })}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  con {appointment.salesPerson.name}
+                  con {appointment.salesPerson?.name || "tu ejecutivo de ventas"}
                 </p>
               </div>
             ))}
@@ -289,6 +340,8 @@ export default function ClientSchedule() {
           open={newAppointmentOpen}
           onOpenChange={setNewAppointmentOpen}
           onSubmit={handleNewAppointment}
+          initialDate={selectedDate}
+          customerId={String(user?.id || user?.providerClientPk || "")}
         />
 
         <RescheduleAppointmentDialog
@@ -385,7 +438,7 @@ export default function ClientSchedule() {
                     {format(appointment.date, "dd MMM 'a las' HH:mm", { locale: es })}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    con {appointment.salesPerson.name}
+                    con {appointment.salesPerson?.name || "tu ejecutivo de ventas"}
                   </p>
                 </div>
               ))}
@@ -427,6 +480,8 @@ export default function ClientSchedule() {
         open={newAppointmentOpen}
         onOpenChange={setNewAppointmentOpen}
         onSubmit={handleNewAppointment}
+        initialDate={selectedDate}
+        customerId={String(user?.id || user?.providerClientPk || "")}
       />
 
       <RescheduleAppointmentDialog

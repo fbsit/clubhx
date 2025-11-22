@@ -16,7 +16,15 @@ import { Clock, Calendar, MapPin, Video } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 type ClientAppointment = any;
-const purposeLabels: Record<string,string> = {};
+
+const purposeLabels: Record<string,string> = {
+  product_demo: "Presentación de productos",
+  new_brand: "Nueva marca",
+  training: "Capacitación",
+  follow_up: "Seguimiento",
+  collection: "Cobranza",
+  other: "Otro",
+};
 import { AdvancedScheduleSelector } from "./AdvancedScheduleSelector";
 import { Badge } from "@/components/ui/badge";
 

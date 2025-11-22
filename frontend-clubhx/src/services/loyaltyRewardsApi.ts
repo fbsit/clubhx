@@ -255,7 +255,10 @@ export async function redeemLoyaltyReward(id: string, clientId?: string): Promis
 	return fetchJson<{ success: boolean; points?: number }>(url, { method: "POST" });
 }
 
-export async function getMyRedemptions(status?: 'pending' | 'delivered') {
-	const qs = status ? `?status=${status}` : '';
+export async function getMyRedemptions(status?: 'pending' | 'delivered', clientId?: string) {
+	const params = new URLSearchParams();
+	if (status) params.set('status', status);
+	if (clientId) params.set('client', clientId);
+	const qs = params.toString() ? `?${params.toString()}` : '';
 	return fetchJson<LoyaltyRedemptionDto[]>(`/api/v1/loyalty-rewards/public/my-redemptions${qs}`);
 }

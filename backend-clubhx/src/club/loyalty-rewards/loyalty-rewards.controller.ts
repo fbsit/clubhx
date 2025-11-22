@@ -132,8 +132,17 @@ export class LoyaltyRewardsController {
   }
 
   @Get('public/my-redemptions')
-  async getMyRedemptions(@Headers('authorization') authorization?: string, @Query('status') status?: 'pending' | 'delivered') {
-    const customerId = authorization ? authorization.slice(-16) : 'anonymous';
+  async getMyRedemptions(
+    @Headers('authorization') authorization?: string,
+    @Query('status') status?: 'pending' | 'delivered',
+    @Query('client') client?: string,
+  ) {
+    const customerId =
+      client && String(client).trim().length > 0
+        ? String(client).trim()
+        : authorization
+        ? authorization.slice(-16)
+        : 'anonymous';
     return this.loyaltyRewardsService.listMyRedemptions(customerId, status as any);
   }
 

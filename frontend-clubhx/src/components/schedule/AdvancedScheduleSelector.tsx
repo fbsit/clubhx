@@ -17,24 +17,22 @@ interface ScheduleSelectorProps {
   selectedTime?: string;
   onDateChange: (date: Date) => void;
   onTimeChange: (time: string) => void;
+  occupiedTimes?: string[]; // horarios ya ocupados para ese día
 }
 
-// Mock availability data - in real app this would come from API
-const getAvailableSlots = (date: Date): TimeSlot[] => {
+// Genera todos los slots posibles y marca los que están ocupados
+const getAvailableSlots = (date: Date, occupiedTimes: string[] = []): TimeSlot[] => {
   const slots = [
     "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
     "12:00", "12:30", "14:00", "14:30", "15:00", "15:30",
     "16:00", "16:30", "17:00", "17:30", "18:00"
   ];
 
-  // Simulate some occupied slots based on date
-  const occupiedSlots = [
-    "10:00", "14:30", "16:00" // Simulate occupied times
-  ];
+  const occupiedSet = new Set(occupiedTimes);
 
   return slots.map(time => ({
     time,
-    available: !occupiedSlots.includes(time)
+    available: !occupiedSet.has(time),
   }));
 };
 
@@ -42,11 +40,12 @@ export function AdvancedScheduleSelector({
   selectedDate, 
   selectedTime, 
   onDateChange, 
-  onTimeChange 
+  onTimeChange,
+  occupiedTimes,
 }: ScheduleSelectorProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   
-  const availableSlots = selectedDate ? getAvailableSlots(selectedDate) : [];
+  const availableSlots = selectedDate ? getAvailableSlots(selectedDate, occupiedTimes) : [];
 
   return (
     <div className="space-y-4">
@@ -56,6 +55,7 @@ export function AdvancedScheduleSelector({
         <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
           <PopoverTrigger asChild>
             <Button
+              type="button"
               variant="outline"
               className={cn(
                 "w-full justify-start text-left font-normal",
@@ -98,6 +98,7 @@ export function AdvancedScheduleSelector({
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
             {availableSlots.map((slot) => (
               <Button
+                type="button"
                 key={slot.time}
                 variant={selectedTime === slot.time ? "default" : "outline"}
                 className={cn(

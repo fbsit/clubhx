@@ -18,7 +18,6 @@ export default function NavigationSidebar({ user }: NavigationSidebarProps) {
   const renderNavigation = () => {
     // Always show sidebar, even without user for better UX
     if (!user) {
-      console.log("NavigationSidebar - No user, showing default sidebar");
       return <Sidebar sidebarState={sidebarState} />;
     }
     

@@ -26,7 +26,14 @@ export class DashboardService {
 
       const orders = (ordersResp.data?.results ?? []) as any[];
       const totalOrders = orders.length;
-      const totalSales = orders.reduce((acc, o) => acc + (o.total ?? 0), 0);
+      const totalSales = orders.reduce((acc, o) => {
+        const rawTotal = o.total ?? o.total_amount ?? o.amount ?? 0;
+        const numericTotal =
+          typeof rawTotal === 'number'
+            ? rawTotal
+            : parseFloat(String(rawTotal).replace(/[^\d.-]/g, '')) || 0;
+        return acc + numericTotal;
+      }, 0);
       const pendingPayments = orders.filter(o => ['payment_pending', 'invoiced'].includes(o.status)).length;
 
       return {

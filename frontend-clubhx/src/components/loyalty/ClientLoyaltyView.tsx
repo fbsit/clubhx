@@ -13,11 +13,13 @@ import { toast } from "sonner";
 interface ClientLoyaltyViewProps {
   totalPoints: number;
   isMobile: boolean;
+  onPointsUpdate?: (points: number) => void;
 }
 
 export const ClientLoyaltyView: React.FC<ClientLoyaltyViewProps> = ({ 
   totalPoints, 
-  isMobile 
+  isMobile,
+  onPointsUpdate,
 }) => {
   const { user } = useAuth();
   const [selectedProduct, setSelectedProduct] = useState<LoyaltyProduct | null>(null);
@@ -71,7 +73,14 @@ export const ClientLoyaltyView: React.FC<ClientLoyaltyViewProps> = ({
       if (res.success) {
         toast.success("Canje realizado correctamente");
         setRedeemSuccess(true);
-        setUserPoints(prev => Math.max(0, prev - selectedProduct.pointsCost));
+        const nextPoints =
+          typeof res.points === "number"
+            ? res.points
+            : Math.max(0, userPoints - selectedProduct.pointsCost);
+        setUserPoints(nextPoints);
+        if (onPointsUpdate) {
+          onPointsUpdate(nextPoints);
+        }
         await fetchPublicRewards();
         setTimeout(() => setRedeemSuccess(false), 4000);
       } else {

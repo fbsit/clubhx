@@ -6,8 +6,24 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 type ClientAppointment = any;
-const purposeLabels: Record<string,string> = {};
-const statusLabels: Record<string,string> = {};
+
+// Etiquetas legibles para el propósito y estado de la cita
+const purposeLabels: Record<string,string> = {
+  product_demo: "Presentación de productos",
+  new_brand: "Nueva marca",
+  training: "Capacitación",
+  follow_up: "Seguimiento",
+  collection: "Cobranza",
+  other: "Otro",
+};
+const statusLabels: Record<string,string> = {
+  requested: "Solicitada",
+  confirmed: "Confirmada",
+  in_progress: "En curso",
+  completed: "Completada",
+  cancelled: "Cancelada",
+  rescheduled: "Reagendada",
+};
 
 interface AppointmentCardProps {
   appointment: ClientAppointment;
@@ -41,6 +57,12 @@ export function AppointmentCard({
   onCancel, 
   onJoinMeeting 
 }: AppointmentCardProps) {
+  const salesPerson = appointment.salesPerson || {
+    name: "Ejecutivo de Ventas",
+    email: "",
+    phone: "",
+    avatar: "",
+  };
   const isPast = appointment.date < new Date();
   const isToday = format(appointment.date, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
   const canJoin = appointment.type === "videollamada" && appointment.status === "confirmed" && !isPast;
@@ -109,14 +131,14 @@ export function AppointmentCard({
         <div className="flex items-center justify-between mb-3 p-2 bg-muted/30 rounded-lg">
           <div className="flex items-center gap-2">
             <Avatar className="h-6 w-6">
-              <AvatarImage src={appointment.salesPerson.avatar} />
+              <AvatarImage src={salesPerson.avatar} />
               <AvatarFallback className="text-xs">
-                {appointment.salesPerson.name.substring(0, 2).toUpperCase()}
+                {salesPerson.name.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
               <p className="text-xs font-medium truncate">
-                {appointment.salesPerson.name}
+                {salesPerson.name}
               </p>
               <p className="text-xs text-muted-foreground">
                 Ejecutivo de Ventas
@@ -128,7 +150,7 @@ export function AppointmentCard({
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0"
-              onClick={() => window.open(`tel:${appointment.salesPerson.phone}`)}
+              onClick={() => salesPerson.phone && window.open(`tel:${salesPerson.phone}`)}
             >
               <Phone className="h-3 w-3" />
             </Button>
@@ -136,7 +158,7 @@ export function AppointmentCard({
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0"
-              onClick={() => window.open(`mailto:${appointment.salesPerson.email}`)}
+              onClick={() => salesPerson.email && window.open(`mailto:${salesPerson.email}`)}
             >
               <Mail className="h-3 w-3" />
             </Button>

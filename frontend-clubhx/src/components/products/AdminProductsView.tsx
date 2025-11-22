@@ -21,7 +21,8 @@ import {
   MoreHorizontal,
   Download,
   Upload,
-  FileText
+  FileText,
+  Loader2,
 } from "lucide-react";
 import AdminProductCard from "./AdminProductCard";
 import ProductFilter from "./ProductFilter";
@@ -156,233 +157,242 @@ export default function AdminProductsView() {
 
   return (
     <div className="space-y-6 overflow-hidden">
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Package className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total productos</p>
-              <p className="text-2xl font-bold">{totalProducts}</p>
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Populares</p>
-              <p className="text-2xl font-bold">{popularProducts}</p>
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <AlertCircle className="h-5 w-5 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Stock bajo</p>
-              <p className="text-2xl font-bold">{lowStockProducts}</p>
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <Package className="h-5 w-5 text-red-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Sin stock</p>
-              <p className="text-2xl font-bold">{outOfStockProducts}</p>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Search and Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center">
-        <div className="relative w-full sm:flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar productos..." 
-            className="pl-10 h-11"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-sm">Cargando productos...</p>
         </div>
-        
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Button 
-            variant={filtersVisible ? "default" : "outline"} 
-            size="sm"
-            className="flex gap-2 items-center h-11 relative"
-            onClick={toggleFilters}
-          >
-            <Filter className="h-4 w-4" />
-            <span className="hidden sm:inline">Filtros</span>
-            {activeFilterCount > 0 && (
-              <Badge variant="secondary" className="ml-1 h-5 min-w-5 p-0 flex items-center justify-center">
-                {activeFilterCount}
-              </Badge>
-            )}
-          </Button>
-          
-          <Button 
-            onClick={handleNewProduct}
-            size="sm"
-            className="flex gap-2 items-center h-11"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Nuevo Producto</span>
-          </Button>
+      ) : (
+        <>
+          {/* Stats Overview */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Package className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total productos</p>
+                  <p className="text-2xl font-bold">{totalProducts}</p>
+                </div>
+              </div>
+            </Card>
+            
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Populares</p>
+                  <p className="text-2xl font-bold">{popularProducts}</p>
+                </div>
+              </div>
+            </Card>
+            
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <AlertCircle className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Stock bajo</p>
+                  <p className="text-2xl font-bold">{lowStockProducts}</p>
+                </div>
+              </div>
+            </Card>
+            
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <Package className="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Sin stock</p>
+                  <p className="text-2xl font-bold">{outOfStockProducts}</p>
+                </div>
+              </div>
+            </Card>
+          </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          {/* Search and Filter Bar */}
+          <div className="flex flex-col sm:flex-row gap-3 items-center">
+            <div className="relative w-full sm:flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Buscar productos..." 
+                className="pl-10 h-11"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button 
-                variant="outline" 
+                variant={filtersVisible ? "default" : "outline"} 
+                size="sm"
+                className="flex gap-2 items-center h-11 relative"
+                onClick={toggleFilters}
+              >
+                <Filter className="h-4 w-4" />
+                <span className="hidden sm:inline">Filtros</span>
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 p-0 flex items-center justify-center">
+                    {activeFilterCount}
+                  </Badge>
+                )}
+              </Button>
+              
+              <Button 
+                onClick={handleNewProduct}
                 size="sm"
                 className="flex gap-2 items-center h-11"
               >
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="hidden sm:inline">Más Acciones</span>
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Nuevo Producto</span>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={handleBulkUpload}>
-                <Upload className="mr-2 h-4 w-4" />
-                Carga Masiva
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleDownloadTemplate}>
-                <Download className="mr-2 h-4 w-4" />
-                Descargar Plantilla
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportAll}>
-                <FileText className="mr-2 h-4 w-4" />
-                Exportar Todos ({totalProducts})
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={handleExportFiltered}
-                disabled={sortedProducts.length === 0}
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                Exportar Filtrados ({sortedProducts.length})
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleAnalytics}>
-                <BarChart3 className="mr-2 h-4 w-4" />
-                Analíticas
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
 
-      {/* Main content with filters sidebar and products grid */}
-      <div className="flex flex-col md:flex-row gap-5">
-        {/* Filters sidebar - visible on toggle with smooth animation */}
-        {filtersVisible && (
-          <div 
-            className="md:w-72 flex-shrink-0 animate-fade-in"
-            style={{ animationDuration: '0.3s' }}
-          >
-            <ProductFilter 
-              filters={activeFilters} 
-              onChange={handleFilterChange}
-              onClose={() => setFiltersVisible(false)}
-              className="md:sticky md:top-4"
-            />
-          </div>
-        )}
-
-        <div className="flex-1">
-          {/* Category Tabs */}
-          <Tabs 
-            defaultValue="all" 
-            value={currentTab}
-            onValueChange={setCurrentTab}
-            className="w-full"
-          >
-            <TabsList className="h-auto p-1 bg-muted/50 grid grid-cols-5 w-full mb-4">
-              <TabsTrigger value="all" className="py-1.5 px-2 text-xs md:text-sm">
-                Todos
-              </TabsTrigger>
-              <TabsTrigger value="Color" className="py-1.5 px-2 text-xs md:text-sm">
-                Color
-              </TabsTrigger>
-              <TabsTrigger value="Care" className="py-1.5 px-2 text-xs md:text-sm">
-                Cuidado
-              </TabsTrigger>
-              <TabsTrigger value="Styling" className="py-1.5 px-2 text-xs md:text-sm">
-                Peinado
-              </TabsTrigger>
-              <TabsTrigger value="Technical" className="py-1.5 px-2 text-xs md:text-sm">
-                Técnico
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value={currentTab} className="m-0">
-              {/* Results count */}
-              <div className="mb-4 text-sm text-muted-foreground flex items-center">
-                <span>
-                  Mostrando {paginationState.displayedItems} de {sortedProducts.length} productos
-                </span>
-              </div>
-
-              {/* Products Grid */}
-              {sortedProducts.length > 0 ? (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {paginatedProducts.map(product => (
-                      <AdminProductCard 
-                        key={product.id}
-                        product={product}
-                      />
-                    ))}
-                  </div>
-                  
-                  {/* Pagination Controls */}
-                  {sortedProducts.length > paginationConfig.initialPageSize && (
-                    <PaginationControls
-                      state={paginationState}
-                      actions={paginationActions}
-                      showLoadMore={false}
-                      className="mt-6"
-                    />
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center p-8 bg-background border border-dashed rounded-xl">
-                  <div className="text-4xl mb-4">📦</div>
-                  <h3 className="text-lg font-medium mb-2">No se encontraron productos</h3>
-                  <p className="text-muted-foreground text-center mb-4">
-                    No hay productos que coincidan con tu búsqueda o filtros seleccionados.
-                  </p>
-                  <Button onClick={handleNewProduct} className="mt-2">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Agregar Primer Producto
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex gap-2 items-center h-11"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                    <span className="hidden sm:inline">Más Acciones</span>
                   </Button>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={handleBulkUpload}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Carga Masiva
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleDownloadTemplate}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Descargar Plantilla
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportAll}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Exportar Todos ({totalProducts})
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={handleExportFiltered}
+                    disabled={sortedProducts.length === 0}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Exportar Filtrados ({sortedProducts.length})
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleAnalytics}>
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    Analíticas
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
 
-      {/* Bulk Upload Dialog */}
-      <ProductBulkUploadDialog
-        open={bulkUploadOpen}
-        onOpenChange={setBulkUploadOpen}
-        onUploadComplete={handleBulkUploadComplete}
-      />
+          {/* Main content with filters sidebar and products grid */}
+          <div className="flex flex-col md:flex-row gap-5">
+            {/* Filters sidebar - visible on toggle with smooth animation */}
+            {filtersVisible && (
+              <div 
+                className="md:w-72 flex-shrink-0 animate-fade-in"
+                style={{ animationDuration: '0.3s' }}
+              >
+                <ProductFilter 
+                  filters={activeFilters} 
+                  onChange={handleFilterChange}
+                  onClose={() => setFiltersVisible(false)}
+                  className="md:sticky md:top-4"
+                />
+              </div>
+            )}
+
+            <div className="flex-1">
+              {/* Category Tabs */}
+              <Tabs 
+                defaultValue="all" 
+                value={currentTab}
+                onValueChange={setCurrentTab}
+                className="w-full"
+              >
+                <TabsList className="h-auto p-1 bg-muted/50 grid grid-cols-5 w-full mb-4">
+                  <TabsTrigger value="all" className="py-1.5 px-2 text-xs md:text-sm">
+                    Todos
+                  </TabsTrigger>
+                  <TabsTrigger value="Color" className="py-1.5 px-2 text-xs md:text-sm">
+                    Color
+                  </TabsTrigger>
+                  <TabsTrigger value="Care" className="py-1.5 px-2 text-xs md:text-sm">
+                    Cuidado
+                  </TabsTrigger>
+                  <TabsTrigger value="Styling" className="py-1.5 px-2 text-xs md:text-sm">
+                    Peinado
+                  </TabsTrigger>
+                  <TabsTrigger value="Technical" className="py-1.5 px-2 text-xs md:text-sm">
+                    Técnico
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value={currentTab} className="m-0">
+                  {/* Results count */}
+                  <div className="mb-4 text-sm text-muted-foreground flex items-center">
+                    <span>
+                      Mostrando {paginationState.displayedItems} de {sortedProducts.length} productos
+                    </span>
+                  </div>
+
+                  {/* Products Grid */}
+                  {sortedProducts.length > 0 ? (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {paginatedProducts.map(product => (
+                          <AdminProductCard 
+                            key={product.id}
+                            product={product}
+                          />
+                        ))}
+                      </div>
+                      
+                      {/* Pagination Controls */}
+                      {sortedProducts.length > paginationConfig.initialPageSize && (
+                        <PaginationControls
+                          state={paginationState}
+                          actions={paginationActions}
+                          showLoadMore={false}
+                          className="mt-6"
+                        />
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center p-8 bg-background border border-dashed rounded-xl">
+                      <div className="text-4xl mb-4">📦</div>
+                      <h3 className="text-lg font-medium mb-2">No se encontraron productos</h3>
+                      <p className="text-muted-foreground text-center mb-4">
+                        No hay productos que coincidan con tu búsqueda o filtros seleccionados.
+                      </p>
+                      <Button onClick={handleNewProduct} className="mt-2">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Agregar Primer Producto
+                      </Button>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
+
+          {/* Bulk Upload Dialog */}
+          <ProductBulkUploadDialog
+            open={bulkUploadOpen}
+            onOpenChange={setBulkUploadOpen}
+            onUploadComplete={handleBulkUploadComplete}
+          />
+        </>
+      )}
     </div>
   );
 }

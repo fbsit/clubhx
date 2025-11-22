@@ -350,7 +350,11 @@ export function usePublicLoyaltyRewards(customerPoints: number = 0, limit: numbe
   };
 }
 
-export function useMyRedemptions(status?: 'pending' | 'delivered', enabled: boolean = true) {
+export function useMyRedemptions(
+  status?: 'pending' | 'delivered',
+  enabled: boolean = true,
+  clientId?: string,
+) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -359,7 +363,7 @@ export function useMyRedemptions(status?: 'pending' | 'delivered', enabled: bool
     try {
       setLoading(true);
       setError(null);
-      const data = await getMyRedemptions(status);
+      const data = await getMyRedemptions(status, clientId);
       setItems(data);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al cargar historial de canjes';
@@ -368,7 +372,7 @@ export function useMyRedemptions(status?: 'pending' | 'delivered', enabled: bool
     } finally {
       setLoading(false);
     }
-  }, [status]);
+  }, [status, clientId]);
 
   useEffect(() => {
     if (enabled) {

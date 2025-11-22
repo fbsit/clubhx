@@ -307,7 +307,7 @@ export default function ClientDashboard({
         <StatusCard 
           icon={<ShoppingCart className="h-4 w-4 text-muted-foreground" />}
           title="Total de Pedidos"
-          value={String(ordersTotal ?? 0)}
+          value={String(ordersTotal ?? clientOrdersTotal ?? 0)}
           subtitle="+5 pedidos en el último mes"
         />
         

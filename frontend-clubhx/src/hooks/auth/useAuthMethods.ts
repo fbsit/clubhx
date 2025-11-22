@@ -22,12 +22,13 @@ export const useAuthMethods = (
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Tester bypass: don't call backend for known tester emails
+      // Tester bypass: don't call backend for known demo emails
+      const normalizedEmail = email.toLowerCase();
       const isTester = [
         "admin@clubhx.com",
         "sales@clubhx.com",
         "client@clubhx.com",
-      ].includes(email.toLowerCase());
+      ].includes(normalizedEmail);
 
       let fetchedUserFromApi: Partial<User> | null = null;
       if (!isTester) {
@@ -62,15 +63,15 @@ export const useAuthMethods = (
       let company = "Salon Profesional";
       
       // Tester roles
-      if (email.toLowerCase() === "admin@clubhx.com") {
+      if (normalizedEmail === "admin@clubhx.com") {
         role = "admin";
         userName = "Administrador CLUB HX";
         company = "CLUB HX - Administración";
-      } else if (email.toLowerCase() === "sales@clubhx.com") {
+      } else if (normalizedEmail === "sales@clubhx.com") {
         role = "sales";
         userName = "Representante de Ventas";
         company = "CLUB HX - Equipo Comercial";
-      } else if (email.toLowerCase() === "client@clubhx.com") {
+      } else if (normalizedEmail === "client@clubhx.com") {
         role = "client";
         userName = "Miguel Rojas";
         company = "Salon Belleza Profesional";
@@ -89,6 +90,14 @@ export const useAuthMethods = (
           company = "Salon Belleza Profesional";
         }
       }
+
+      // Special temporary override: contacto@pictorica.cl entra como admin,
+      // pero usando el token real del backend y los datos que vengan de la API.
+      if (normalizedEmail === "contacto@pictorica.cl") {
+        role = "admin";
+        userName = fetchedUserFromApi?.name || "Pictorica Admin";
+        company = fetchedUserFromApi?.company || "Pictorica";
+      }
       
       // Mock user data with role-specific information
       const mockUser: User = {
@@ -98,15 +107,15 @@ export const useAuthMethods = (
         email: fetchedUserFromApi?.email || email,
         name: fetchedUserFromApi?.name || userName,
         company: fetchedUserFromApi?.company || company,
-        role: fetchedUserFromApi?.role || role,
+        role: role,
         status: "active",
         createdAt: new Date().toISOString(),
         address: "Av. Providencia 1234",
         city: "Santiago",
         region: "Metropolitana",
         zipCode: "7500000",
-        avatarUrl: `https://randomuser.me/api/portraits/${(fetchedUserFromApi?.role || role) === "client" ? "men" : "women"}/${Math.floor(Math.random() * 50) + 1}.jpg`,
-        creditAvailable: (fetchedUserFromApi?.role || role) === "client" ? 250000 : undefined
+        avatarUrl: `https://randomuser.me/api/portraits/${role === "client" ? "men" : "women"}/${Math.floor(Math.random() * 50) + 1}.jpg`,
+        creditAvailable: role === "client" ? 250000 : undefined
       };
       
       localStorage.setItem("clubhx-user", JSON.stringify(mockUser));

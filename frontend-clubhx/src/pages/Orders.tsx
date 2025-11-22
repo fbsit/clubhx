@@ -15,6 +15,7 @@ import { useEffect } from "react";
 import { listOrders, listOrdersByClient, listOrdersBySeller } from "@/services/ordersApi";
 import { usePagination } from "@/hooks/usePagination";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { Loader2 } from "lucide-react";
 
 export default function Orders() {
   const navigate = useNavigate();
@@ -214,7 +215,13 @@ export default function Orders() {
   return (
     <div className="container max-w-7xl py-6 sm:py-8 animate-enter px-3 sm:px-6">
       <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8">Mis Pedidos</h1>
-      
+
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="text-sm">Cargando tus pedidos...</p>
+          </div>
+        ) : (
         <ClientOrdersView 
           filteredOrders={filteredOrders}
           searchQuery={searchQuery}
@@ -245,9 +252,10 @@ export default function Orders() {
           hiddenCompletedCount={hiddenCompletedCount}
           onPaymentProofUploaded={handlePaymentProofUploaded}
         />
+        )}
 
-        {/* Pagination Controls for Client View */}
-        {user?.role === "client" && allFilteredOrders.length > 0 && (
+        {/* Pagination Controls for Client View (solo cuando no está cargando nueva data) */}
+        {user?.role === "client" && !loading && allFilteredOrders.length > 0 && (
           <div className="mt-6">
             <PaginationControls
               state={paginationState}

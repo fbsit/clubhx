@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, Post, Put, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { ClubApiService } from '../shared/club-api.service';
 
@@ -14,9 +14,20 @@ export class CatalogController {
   constructor(private readonly api: ClubApiService) {}
 
   @Get('categories')
-  async listCategories(@Res() res: Response) {
+  async listCategories(@Res() res: Response, @Headers('authorization') authorization?: string) {
     // Proxy to provider prodcategories (also serves brands)
-    const upstream = await this.api.request('get', '/api/v1/prodcategories/', {});
+    // If an Authorization header is present, forward it transforming Bearer -> Token.
+    // Otherwise, ClubApiService will fall back to CLUB_API_TOKEN (defaultAuthHeader).
+    const authHeader = authorization
+      ? authorization.startsWith('Bearer ')
+        ? `Token ${authorization.slice(7)}`
+        : authorization
+      : undefined;
+
+    const upstream = await this.api.request('get', '/api/v1/prodcategories/', {
+      headers: authHeader ? { Authorization: authHeader } : undefined,
+      useAuthHeader: authHeader ? false : undefined,
+    });
     return res.status(upstream.status).send(upstream.data);
   }
 
@@ -43,9 +54,18 @@ export class CatalogController {
   }
 
   @Get('brands')
-  async listBrands(@Res() res: Response) {
+  async listBrands(@Res() res: Response, @Headers('authorization') authorization?: string) {
     // Same upstream as categories
-    const upstream = await this.api.request('get', '/api/v1/prodcategories/', {});
+    const authHeader = authorization
+      ? authorization.startsWith('Bearer ')
+        ? `Token ${authorization.slice(7)}`
+        : authorization
+      : undefined;
+
+    const upstream = await this.api.request('get', '/api/v1/prodcategories/', {
+      headers: authHeader ? { Authorization: authHeader } : undefined,
+      useAuthHeader: authHeader ? false : undefined,
+    });
     return res.status(upstream.status).send(upstream.data);
   }
 }

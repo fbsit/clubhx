@@ -51,8 +51,11 @@ export default function Loyalty() {
   const [activeTab, setActiveTab] = useState("redeem");
 
   // Load redemptions only for active tabs
-  const history = useMyRedemptions('delivered', activeTab === 'history');
-  const pending = useMyRedemptions('pending', activeTab === 'pending');
+  const clientId = String(user?.id || user?.providerClientPk || "");
+  // Historial: todos los canjes (pendientes o entregados)
+  const history = useMyRedemptions(undefined, activeTab === 'history', clientId);
+  // Pendientes: solo status pending
+  const pending = useMyRedemptions('pending', activeTab === 'pending', clientId);
 
   const progress = tierInfo.next ? (tierInfo.pointsLast12Months / tierInfo.next.minPoints) * 100 : 100;
 
@@ -114,7 +117,11 @@ export default function Loyalty() {
 
           {/* Redemption Tab */}
           <TabsContent value="redeem" className="mt-0">
-            <ClientLoyaltyView totalPoints={totalPoints} isMobile={isMobile} />
+            <ClientLoyaltyView
+              totalPoints={totalPoints}
+              isMobile={isMobile}
+              onPointsUpdate={setTotalPoints}
+            />
           </TabsContent>
 
           {/* History Tab */}
@@ -122,7 +129,7 @@ export default function Loyalty() {
             {history.loading && <div className="text-sm text-muted-foreground">Cargando historial…</div>}
             {history.error && <div className="text-sm text-destructive">{history.error}</div>}
             {!history.loading && !history.error && history.items.length === 0 && (
-              <div className="text-sm text-muted-foreground">No tienes canjes entregados.</div>
+              <div className="text-sm text-muted-foreground">No tienes canjes registrados.</div>
             )}
             {!history.loading && !history.error && history.items.length > 0 && (
               <div className="space-y-3">

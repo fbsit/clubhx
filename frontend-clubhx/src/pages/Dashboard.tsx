@@ -123,6 +123,7 @@ export default function Dashboard() {
         ordersError={ordersError}
         eventsError={eventsError}
         creditAvailable={0}
+        ordersTotal={ordersTotal}
       />
     </div>
   );
